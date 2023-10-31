@@ -89,8 +89,6 @@ def webhook(prod=False):
     # order rejected by restaurant
     if data["body"]["order"]["status"] == "rejected":
         return jsonify({"message": "Order rejected successfully"}), 200
-    if data["body"]["order"]["status"] == "canceled":
-        return jsonify({"message": "Order canceled successfully"}), 200
 
     for item in data["body"]["order"]["items"]:
         if item["pos_item_id"] == "":
@@ -112,6 +110,9 @@ def webhook(prod=False):
 
     if data["event"] == "order.status_update":
         sync_status(data["body"]["order"]["id"], payload, prod)
+
+    if data["body"]["order"]["status"] == "canceled":
+        return jsonify({"message": "Order canceled successfully"}), 200
 
     return jsonify({"message": "Order received successfully"}), 200
 
