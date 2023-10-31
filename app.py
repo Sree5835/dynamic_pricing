@@ -5,8 +5,6 @@ import datetime
 from requests.auth import HTTPBasicAuth
 import os
 
-# from database.database_manager import DatabaseManager, insert_order_data
-
 # NOTE this code was built for tablet-based sites ONLY
 
 
@@ -46,12 +44,10 @@ def sync_status(order_id: str, payload: dict, prod: bool = False):
         "Authorization": f"Bearer {get_bearer_token(prod)}",
     }
 
-    print("sent this payload: ", payload)
+    print("sent payload ", payload)
     # NOTE make sure to check that the response sync is always given 200 response code
     response_sync = requests.post(url, json=payload, headers=headers)
-    print(
-        f"response to the sync_status:{response_sync.status_code} {response_sync.text}"
-    )
+    print(f"response_sync order {response_sync.text}")
 
     return response_sync.json()
 
@@ -90,14 +86,11 @@ def webhook(prod=False):
     date_time = datetime.datetime.now().isoformat(timespec="milliseconds")[:-3] + "Z"
     payload = {"status": "succeeded", "occurred_at": date_time}
 
-    # this is for items with incorrect pos_item_id (mismatched PLUS, according to Deliveroo)
-
-    # payload = {
-    #     "status": "failed",
-    #     "reason": "pos_item_id_mismatched",
-    #     "notes": "id not unique",
-    #     "occurred_at": date_time,
-    # }
+    # order rejected by restaurant
+    if data["body"]["order"]["status"] == "rejected":
+        return jsonify({"message": "Order rejected successfully"}), 200
+    if data["body"]["order"]["status"] == "canceled":
+        return jsonify({"message": "Order canceled successfully"}), 200
 
     for item in data["body"]["order"]["items"]:
         if item["pos_item_id"] == "":
@@ -109,16 +102,16 @@ def webhook(prod=False):
             }
             break
 
+    # NOTE: This is for items with incorrect pos_item_id (mismatched PLUS, according to Deliveroo)
+    # payload = {
+    #     "status": "failed",
+    #     "reason": "pos_item_id_mismatched",
+    #     "notes": "id not unique",
+    #     "occurred_at": date_time,
+    # }
+
     if data["event"] == "order.status_update":
         sync_status(data["body"]["order"]["id"], payload, prod)
-
-    # order rejected by restaurant
-    if data["body"]["order"]["status"] == "rejected":
-        print("order rejected")
-        return jsonify({"message": "Order rejected successfully"}), 200
-    if data["body"]["order"]["status"] == "canceled":
-        print("order canceled")
-        return jsonify({"message": "Order canceled successfully"}), 200
 
     return jsonify({"message": "Order received successfully"}), 200
 
@@ -139,11 +132,9 @@ def prod_webhook():
     return webhook(prod=True)
 
 
-# @app.route("/test", methods=["POST"])
-# # TODO: need to deal stuff other than order.new
-# def test():
-#     insert_order_data(request.get_json())
-#     return jsonify({"message": "Order received successfully"}), 200
+@app.route("/", methods=["GET"])
+def test():
+    return jsonify({"message": "The API is working just load a valid URL"}), 200
 
 
 if __name__ == "__main__":
