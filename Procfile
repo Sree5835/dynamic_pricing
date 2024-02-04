@@ -1,1 +1,1 @@
-web: gunicorn dyanmic_pricing.webhook.app:app
+web: gunicorn .src.dyanmic_pricing.webhook.app:app
