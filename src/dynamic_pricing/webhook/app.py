@@ -81,7 +81,8 @@ def webhook(prod=False):
     print("__________________________________________________________")
 
     data = request.get_json()
-    print(data)
+    if not prod:
+        print(data)
     # current time like "2022-04-12T12:43:00.000Z"
     date_time = datetime.datetime.now().isoformat(timespec="milliseconds")[:-3] + "Z"
     payload = {"status": "succeeded", "occurred_at": date_time}

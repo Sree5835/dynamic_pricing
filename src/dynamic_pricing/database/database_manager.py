@@ -220,7 +220,8 @@ def insert_order_data(order_data):
 
 if __name__ == "__main__":
     # Load the JSON data from your provided input
-    input_json = """(The JSON data you provided)"""
+    with open("./src/dynamic_pricing/database/sample.json", "r") as file:
+        input_json = file.read()
 
     # Parse the JSON data
     order_data = json.loads(input_json)
