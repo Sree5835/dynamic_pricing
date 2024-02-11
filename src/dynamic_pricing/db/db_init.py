@@ -37,7 +37,7 @@ cur.execute(
 cur.execute(
     """CREATE TABLE partners (
     partner_id SERIAL PRIMARY KEY,
-    partner_name VARCHAR(255) NOT NULL
+    partner_name VARCHAR(255) UNIQUE NOT NULL
 );"""
 )
 
@@ -54,8 +54,8 @@ cur.execute(
     modifier_id SERIAL PRIMARY KEY,
     deliveroo_modifier_id VARCHAR(255) NOT NULL,
     modifier_name VARCHAR(255) NOT NULL,
-    modifier_operational_name VARCHAR(255) NOT NULL
-);"""
+    modifier_operational_name VARCHAR(255) NOT NULL);
+    """
 )
 
 cur.execute(
@@ -63,7 +63,8 @@ cur.execute(
     item_id SERIAL PRIMARY KEY,
     deliveroo_item_id VARCHAR(255) NOT NULL,
     item_name VARCHAR(255) NOT NULL,
-    item_operational_name VARCHAR(255) NOT NULL);"""
+    item_operational_name VARCHAR(255) NOT NULL);
+"""
 )
 
 
@@ -73,35 +74,37 @@ cur.execute(
     deliveroo_order_id VARCHAR(255) NOT NULL,
     deliveroo_order_number BIGINT NOT NULL,
     order_status VARCHAR(255) NOT NULL,
-    order_timestamp TIMESTAMP NOT NULL,
-    customer_id SERIAL,
+    order_placed_timestamp TIMESTAMP NOT NULL,
+    order_updated_timestamp TIMESTAMP,
+    customer_id INT NOT NULL,
         CONSTRAINT fk_orders_customer_id FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE SET NULL,
-    partner_id SERIAL NOT NULL,
+    partner_id INT NOT NULL,
         CONSTRAINT fk_orders_partner_id FOREIGN KEY (partner_id) REFERENCES partners(partner_id) ON DELETE SET NULL
 );"""
 )
 cur.execute(
     """CREATE TABLE order_items (
-    order_id SERIAL PRIMARY KEY,
+    order_id INT NOT NULL,
         CONSTRAINT fk_order_items_order_id FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE SET NULL,
-    item_id SERIAL NOT NULL,
+    item_id INT NOT NULL,
         CONSTRAINT fk_order_items_item_id FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE SET NULL,
     quantity INT NOT NULL,
-    fractional_price INT NOT NULL
+    fractional_price INT NOT NULL,
+    PRIMARY KEY (order_id, item_id)
 );"""
 )
 
 cur.execute(
     """CREATE TABLE order_item_modifiers (
-    order_id SERIAL NOT NULL,
+    order_id INT NOT NULL,
         CONSTRAINT fk_order_item_modifiers_order_id FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE SET NULL,
-    item_id SERIAL NOT NULL,
+    item_id INT NOT NULL,
         CONSTRAINT fk_order_item_modifiers_item_id FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE SET NULL,
-    modifier_id SERIAL NOT NULL,
+    modifier_id INT NOT NULL,
         CONSTRAINT fk_order_item_modifiers_modifier_id FOREIGN KEY (modifier_id) REFERENCES modifiers(modifier_id) ON DELETE SET NULL,
     quantity INT NOT NULL,
     fractional_price INT NOT NULL,
-    PRIMARY KEY (order_id, item_id)
+    PRIMARY KEY (order_id, item_id,modifier_id)
 );"""
 )
 

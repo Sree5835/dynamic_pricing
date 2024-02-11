@@ -1,3 +1,6 @@
 .env
 venv
 sample.json
+build
+src/dynamic_pricing.egg-info
+src/data
