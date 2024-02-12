@@ -37,6 +37,32 @@ def drop_tmp_table(tmp_table_name):
         session.commit()
 
 
+def add_constraints(table_name, pk_cols):
+    with Session() as session:
+        session.execute(
+            text(
+                f"""ALTER TABLE {table_name}
+                ADD CONSTRAINT temp_constraint UNIQUE ({', '.join(pk_cols)});
+                """
+            )
+        )
+        session.commit()
+
+
+def remove_constraints(
+    table_name,
+):
+    with Session() as session:
+        session.execute(
+            text(
+                f"""ALTER TABLE {table_name}
+                    DROP CONSTRAINT temp_constraint;"""
+            )
+        )
+
+        session.commit()
+
+
 def upsert(table_name, data_dict, pk_cols, returning_col=None):
     """Upsert data into the main table."""
     tmp_table_name = create_tmp_table(table_name, data_dict=data_dict)
@@ -47,6 +73,8 @@ def upsert(table_name, data_dict, pk_cols, returning_col=None):
                 for col in data_dict.keys()
                 if col not in pk_cols
             ]
+
+            add_constraints(table_name, pk_cols)
 
             query = f"""
                 INSERT INTO {table_name} ({', '.join(data_dict.keys())})
@@ -62,8 +90,12 @@ def upsert(table_name, data_dict, pk_cols, returning_col=None):
             if returning_col:
                 result = result.scalar()
             session.commit()
+
+            remove_constraints(table_name)
     except Exception as e:
-        raise Exception(f"Error upserting data into table {table_name}: {e}") from e
+        raise ConnectionError(
+            f"Error upserting data into table {table_name}: {e}"
+        ) from e
     finally:
         drop_tmp_table(tmp_table_name)
     return result
@@ -81,7 +113,7 @@ def insert_customer(customer_data: dict) -> int:
     )
 
 
-def insert_order(order_data: dict, customer_id: int) -> int:
+def insert_order(order_data: dict, partner_id: int, customer_id: int) -> int:
     """Insert or update order data."""
     filtered_order_data = {
         "deliveroo_order_id": order_data["id"],
@@ -94,8 +126,8 @@ def insert_order(order_data: dict, customer_id: int) -> int:
             order_data["status_log"][1]["at"].split(".")[0] + "Z",
             "%Y-%m-%dT%H:%M:%SZ",
         ),
-        "customer_id": customer_id,
-        "partner_id": order_data["location_id"],
+        "customer_id": customer_id if customer_id != -1 else None,
+        "partner_id": partner_id,
     }
     return upsert("orders", filtered_order_data, ["deliveroo_order_id"], "order_id")
 
@@ -110,7 +142,7 @@ def insert_item(item_data: dict) -> int:
     return upsert(
         "items",
         filtered_item_data,
-        ["deliveroo_item_id"],
+        ["deliveroo_item_id", "item_name"],
         "item_id",
     )
 
@@ -124,15 +156,15 @@ def insert_modifier(modifier_data: dict) -> int:
     }
     return upsert(
         "modifiers",
-        modifier_data,
-        ["deliveroo_modifier_id"],
+        filtered_modifier_data,
+        ["deliveroo_modifier_id", "modifier_name"],
         "modifier_id",
     )
 
 
 def insert_order_item(order_id: int, item_id: int, item_data: dict) -> None:
     """Insert order item data."""
-    order_item_data = {
+    filtered_order_item_data = {
         "order_id": order_id,
         "item_id": item_id,
         "quantity": item_data["quantity"],
@@ -140,7 +172,7 @@ def insert_order_item(order_id: int, item_id: int, item_data: dict) -> None:
     }
     upsert(
         table_name="order_items",
-        data_dict=order_item_data,
+        data_dict=filtered_order_item_data,
         pk_cols=["order_id", "item_id"],
     )
 
@@ -149,7 +181,7 @@ def insert_order_item_modifier(
     order_id: int, item_id: int, modifier_data: dict
 ) -> None:
     """Insert order item modifier data."""
-    order_item_modifier_data = {
+    filtered_order_item_modifier_data = {
         "order_id": order_id,
         "item_id": item_id,
         "modifier_id": modifier_data["modifier_id"],
@@ -158,15 +190,33 @@ def insert_order_item_modifier(
     }
     upsert(
         table_name="order_item_modifiers",
-        data_dict=order_item_modifier_data,
+        data_dict=filtered_order_item_modifier_data,
         pk_cols=["order_id", "item_id", "modifier_id"],
     )
 
 
-def insert_webhook_order(partner_name: str, order_data: dict) -> None:
+def get_partner_id(partner_name: str) -> int:
+    """Get the partner ID from the database."""
+    with Session() as session:
+        query = text(
+            "SELECT partner_id FROM partners WHERE partner_name = :partner_name"
+        )
+        result = session.execute(query, {"partner_name": partner_name}).scalar()
+        return result or -1
+
+
+def insert_order_data(partner_name: str, order_data: dict, is_webhook=True) -> None:
     """Insert webhook order into the database."""
-    customer_id = insert_customer(order_data["customer"])
-    order_id = insert_order(order_data, customer_id)
+
+    # this statement is leveraging the understanding that the webhook order data tends to have a customer id, but the stored data doesn't
+    if is_webhook:
+        customer_id = insert_customer(order_data["customer"])
+        order_id = insert_order(order_data, order_data["location_id"], customer_id)
+    else:
+        partner_id = get_partner_id(partner_name)
+        if partner_id == -1:
+            raise ValueError(f"Partner {partner_name} does not exist in the database.")
+        order_id = insert_order(order_data, partner_id, -1)
 
     for item_data in order_data["items"]:
         item_id = insert_item(item_data)
@@ -188,4 +238,24 @@ if __name__ == "__main__":
     # print(order_data["body"]["order"].keys())
 
     # Insert the data into the PostgreSQL database
-    insert_webhook_order("Nostimo", order_data["body"]["order"])
+    # try:
+    #     insert_order_data("Nostimo", order_data["body"]["order"])
+    # except Exception as e:
+    #     print(f"Error inserting order data: {e}")
+
+    # with open("./src/data/fetched/sample.json", "r") as file:
+    #     order_data = json.load(file)
+
+    # try:
+    #     insert_order_data("Nostimo", order_data, is_webhook=False)
+    # except Exception as e:
+    #     print(f"Error inserting order data: {e}")
+
+    with open("./src/data/fetched/nostimo/raw_orders.json", "r") as file:
+        orders_data = json.load(file)
+
+    for order_data in orders_data:
+        try:
+            insert_order_data("Nostimo", order_data, is_webhook=False)
+        except Exception as e:
+            print(f"Error inserting order data: {e}")

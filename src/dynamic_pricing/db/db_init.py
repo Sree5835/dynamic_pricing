@@ -32,7 +32,7 @@ def create_tables(connection: psycopg2.extensions.connection) -> None:
             """CREATE TABLE customers (
             customer_id SERIAL PRIMARY KEY,
             first_name VARCHAR(255),
-            contact_number VARCHAR(20) UNIQUE NOT NULL,
+            contact_number VARCHAR(20) NOT NULL,
             contact_access_code VARCHAR(20)
             );"""
         )
@@ -40,7 +40,7 @@ def create_tables(connection: psycopg2.extensions.connection) -> None:
         cursor.execute(
             """CREATE TABLE partners (
             partner_id SERIAL PRIMARY KEY,
-            partner_name VARCHAR(255) UNIQUE NOT NULL
+            partner_name VARCHAR(255) NOT NULL
             );"""
         )
 
@@ -56,7 +56,7 @@ def create_tables(connection: psycopg2.extensions.connection) -> None:
         cursor.execute(
             """CREATE TABLE modifiers (
             modifier_id SERIAL PRIMARY KEY,
-            deliveroo_modifier_id VARCHAR(255) UNIQUE NOT NULL,
+            deliveroo_modifier_id VARCHAR(255) NOT NULL,
             modifier_name VARCHAR(255) NOT NULL,
             modifier_operational_name VARCHAR(255) NOT NULL
             );"""
@@ -65,7 +65,7 @@ def create_tables(connection: psycopg2.extensions.connection) -> None:
         cursor.execute(
             """CREATE TABLE items (
             item_id SERIAL PRIMARY KEY,
-            deliveroo_item_id VARCHAR(255) UNIQUE NOT NULL,
+            deliveroo_item_id VARCHAR(255) NOT NULL,
             item_name VARCHAR(255) NOT NULL,
             item_operational_name VARCHAR(255) NOT NULL
             );"""
@@ -79,7 +79,7 @@ def create_tables(connection: psycopg2.extensions.connection) -> None:
             order_status VARCHAR(255) NOT NULL,
             order_placed_timestamp TIMESTAMP NOT NULL,
             order_updated_timestamp TIMESTAMP,
-            customer_id INT NOT NULL,
+            customer_id INT,
             CONSTRAINT fk_orders_customer_id FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE SET NULL,
             partner_id INT NOT NULL,
             CONSTRAINT fk_orders_partner_id FOREIGN KEY (partner_id) REFERENCES partners(partner_id) ON DELETE SET NULL
