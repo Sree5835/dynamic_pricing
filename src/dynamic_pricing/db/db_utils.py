@@ -3,6 +3,7 @@ import json
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, session, sessionmaker
 import os
+import pandas as pd
 
 # Define the database connection URL
 db_url = os.environ.get("DB_URL")
@@ -142,7 +143,9 @@ def insert_item(item_data: dict) -> int:
     return upsert(
         "items",
         filtered_item_data,
-        ["deliveroo_item_id", "item_name"],
+        [
+            "item_name"
+        ],  #!TODO: will need to change this to actual pk or deliveroo_item_id
         "item_id",
     )
 
@@ -157,7 +160,9 @@ def insert_modifier(modifier_data: dict) -> int:
     return upsert(
         "modifiers",
         filtered_modifier_data,
-        ["deliveroo_modifier_id", "modifier_name"],
+        [
+            "modifier_name"
+        ],  #!TODO: will need to change this to actual pk or deliveroo_modifier_id
         "modifier_id",
     )
 
@@ -225,6 +230,57 @@ def insert_order_data(partner_name: str, order_data: dict, is_webhook=True) -> N
         for modifier_data in item_data["modifiers"]:
             modifier_id = insert_modifier(modifier_data)
             insert_order_item_modifier(order_id, item_id, modifier_data)
+
+
+def load_order_data(partner_name: str) -> pd.DataFrame:
+    with Session() as session:
+        query = f"""
+                SELECT
+                    orders.order_id,
+                    orders.deliveroo_order_id,
+                    orders.deliveroo_order_number,
+                    orders.order_status,
+                    orders.order_placed_timestamp,
+                    orders.order_updated_timestamp,
+                    customers.customer_id,
+                    customers.first_name,
+                    customers.contact_number,
+                    customers.contact_access_code,
+                    partners.partner_id,
+                    partners.partner_name,
+                    items.item_id,
+                    items.deliveroo_item_id,
+                    items.item_name,
+                    items.item_operational_name,
+                    order_items.quantity AS item_quantity,
+                    order_items.fractional_price AS item_fractional_price,
+                    modifiers.modifier_id,
+                    modifiers.deliveroo_modifier_id,
+                    modifiers.modifier_name,
+                    modifiers.modifier_operational_name,
+                    order_item_modifiers.quantity AS modifier_quantity,
+                    order_item_modifiers.fractional_price AS modifier_fractional_price
+                FROM
+                    orders
+                FULL JOIN
+                    customers ON orders.customer_id = customers.customer_id
+                FULL JOIN
+                    partners ON orders.partner_id = partners.partner_id
+                FULL JOIN
+                    order_items ON orders.order_id = order_items.order_id
+                FULL JOIN
+                    items ON order_items.item_id = items.item_id
+                FULL JOIN
+                    order_item_modifiers ON order_items.order_id = order_item_modifiers.order_id AND order_items.item_id = order_item_modifiers.item_id
+                FULL JOIN
+                    modifiers ON order_item_modifiers.modifier_id = modifiers.modifier_id
+                WHERE
+                    partners.partner_name = '{partner_name}';
+                """
+
+        res = pd.read_sql(query, session.connection())
+
+    return res
 
 
 if __name__ == "__main__":
