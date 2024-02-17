@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-import time
 import requests
 import datetime
 from requests.auth import HTTPBasicAuth
