@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 import os
-from sqlalchemy import sql, text
+from sqlalchemy import text
 import sqlalchemy as sqla
-from dynamic_pricing.db_utils import get_db_connection
+from dynamic_pricing.db.db_utils import get_db_connection
 
 load_dotenv()
 
@@ -45,13 +45,13 @@ def create_tables(connection: sqla.engine.base.Connection) -> None:
 
     connection.execute(
         text(
-            f"""INSERT INTO partners (partner_name) VALUES ({os.getenv("PARTNER1")})"""  # noqa: E501
+            f"""INSERT INTO partners (partner_name) VALUES ('{os.getenv("PARTNER1")}')"""  # noqa: E501
         )
     )
 
     connection.execute(
         text(
-            f"""INSERT INTO partners (partner_name) VALUES ({os.getenv("PARTNER2")})"""  # noqa: E501
+            f"""INSERT INTO partners (partner_name) VALUES ('{os.getenv("PARTNER2")}')"""  # noqa: E501
         )
     )
 
