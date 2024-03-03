@@ -151,6 +151,14 @@ def insert_order(
             order_data["status_log"][1]["at"].split(".")[0] + "Z",
             "%Y-%m-%dT%H:%M:%SZ",
         ),
+        "order_prepare_for_timestamp": datetime.strptime(
+            order_data["prepare_for"],
+            "%Y-%m-%dT%H:%M:%SZ",
+        ),
+        "order_start_prepping_at_timestamp": datetime.strptime(
+            order_data["start_preparing_at"],
+            "%Y-%m-%dT%H:%M:%SZ",
+        ),
         "customer_id": customer_id if customer_id != -1 else None,
         "partner_id": partner_id,
     }
@@ -275,6 +283,8 @@ def load_order_data(
                 orders.order_status,
                 orders.order_placed_timestamp,
                 orders.order_updated_timestamp,
+                orders.order_prepare_for_timestamp,
+                orders.order_start_prepping_at_timestamp,
                 customers.customer_id,
                 customers.first_name,
                 customers.contact_number,
@@ -337,11 +347,13 @@ if __name__ == "__main__":
     # except Exception as e:
     #     print(f"Error inserting order data: {e}")
 
-    with open("./src/data/fetched/nostimo/raw_orders.json", "r") as file:
+    with open(
+        "./src/dynamic_pricing/data/fetched/nostimo/raw_orders.json", "r"
+    ) as file:
         orders_data = json.load(file)
     with get_db_connection() as conn:
         print(len(orders_data))
-        for order_data in orders_data[:5]:
+        for order_data in orders_data[5:100]:
             try:
                 insert_order_data(conn, "nostimo", order_data, is_webhook=False)
                 conn.commit()

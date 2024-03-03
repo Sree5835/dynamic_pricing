@@ -4,3 +4,4 @@ sample.json
 build
 src/dynamic_pricing.egg-info
 src/data
+src/dynamic_pricing/data

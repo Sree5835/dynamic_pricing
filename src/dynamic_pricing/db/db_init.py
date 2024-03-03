@@ -86,6 +86,8 @@ def create_tables(connection: sqla.engine.base.Connection) -> None:
         order_status VARCHAR(255) NOT NULL,
         order_placed_timestamp TIMESTAMP NOT NULL,
         order_updated_timestamp TIMESTAMP,
+        order_prepare_for_timestamp TIMESTAMP,
+        order_start_prepping_at_timestamp TIMESTAMP,
         customer_id INT,
         CONSTRAINT fk_orders_customer_id FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE SET NULL,
         partner_id INT NOT NULL,
