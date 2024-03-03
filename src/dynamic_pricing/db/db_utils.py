@@ -353,7 +353,8 @@ if __name__ == "__main__":
         orders_data = json.load(file)
     with get_db_connection() as conn:
         print(len(orders_data))
-        for order_data in orders_data[5:100]:
+        # order number 238 ends 7/8/2023
+        for order_data in orders_data[298:500]:
             try:
                 insert_order_data(conn, "nostimo", order_data, is_webhook=False)
                 conn.commit()
