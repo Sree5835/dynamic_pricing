@@ -72,7 +72,8 @@ def create_tables(connection: sqla.engine.base.Connection) -> None:
         item_id SERIAL PRIMARY KEY,
         deliveroo_item_id VARCHAR(255) NOT NULL,
         item_name VARCHAR(255) NOT NULL,
-        item_operational_name VARCHAR(255) NOT NULL
+        item_operational_name VARCHAR(255) NOT NULL,
+        fractional_cost INT
         );"""
         )
     )
