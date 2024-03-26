@@ -295,6 +295,7 @@ def load_order_data(
                 items.deliveroo_item_id,
                 items.item_name,
                 items.item_operational_name,
+                items.item_fractional_cost,
                 order_items.quantity AS item_quantity,
                 order_items.fractional_price AS item_fractional_price,
                 modifiers.modifier_id,
