@@ -1,6 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
+import numpy as np
+from datetime import timedelta
+import plotly.graph_objects as go
+import plotly.express as px
+
 
 order_timestamp = "order_placed_timestamp"
 
@@ -11,7 +16,7 @@ def split_weekdays_and_weekends(df: pd.DataFrame, time_col: str):
     return weekdays_df, weekend_df
 
 
-def calculate_revenue(df: pd.DataFrame, order_timestamp_column: str):
+def calculate_revenue(df: pd.DataFrame):
     # Calculate the actual average revenue for each interval on an average day
     df = df[
         [
@@ -20,7 +25,7 @@ def calculate_revenue(df: pd.DataFrame, order_timestamp_column: str):
             "item_fractional_price",
             "modifier_fractional_price",
             "modifier_quantity",
-            order_timestamp_column,
+            order_timestamp,
         ]
     ].copy()
     df.fillna(0, inplace=True)
@@ -92,7 +97,7 @@ def plot_average_revenue_per_interval(df: pd.DataFrame, interval: int):
     # Calculate the total number of intervals in a day based on the given interval
     num_intervals = (24 * 60) // interval
 
-    df = calculate_revenue(df, order_timestamp)
+    df = calculate_revenue(df)
     # print(df["revenue"])
     print(df.head())
     # Create a new column for the interval index
@@ -223,7 +228,7 @@ def plot_average_orders_by_day_of_week(df: pd.DataFrame):
 
 def plot_average_revenue_by_day_of_week(df: pd.DataFrame):
     # Calculate the average revenue by day of the week
-    df = calculate_revenue(df, order_timestamp)
+    df = calculate_revenue(df)
 
     # Extract the day of the week from the order_datetime column
     df.loc[:, "day_of_week"] = df[order_timestamp].dt.day_name()
@@ -428,7 +433,7 @@ def calculate_revenue_by_day_period(df, time_intervals=None):
     ]
 
     df.loc[:, "interval_label"] = pd.cut(
-        df[order_timestamp_column].dt.time, bins=time_intervals, labels=interval_labels
+        df[order_timestamp].dt.time, bins=time_intervals, labels=interval_labels
     )
 
     return df.groupby("interval_label", observed=True)["order_value"].sum()
@@ -453,7 +458,168 @@ def calculate_profit_by_day_period(df, time_intervals=None):
     ]
 
     df.loc[:, "interval_label"] = pd.cut(
-        df[order_timestamp_column].dt.time, bins=time_intervals, labels=interval_labels
+        df[order_timestamp].dt.time, bins=time_intervals, labels=interval_labels
     )
 
     return df.groupby("interval_label", observed=True)["profit"].sum()
+
+
+def calculate_profits_over_periods(df, time_intervals=None):
+    # Ensure df is sorted by order_timestamp
+    df.sort_values(by=order_timestamp, inplace=True)
+
+    # Find the earliest and latest dates
+    start_date = df[order_timestamp].min()
+    end_date = df[order_timestamp].max()
+
+    # Initialize the results DataFrame
+    profit_results = pd.DataFrame()
+
+    # Calculate the total period covered by the dataframe
+    total_days = (end_date - start_date).days
+    periods = total_days // 21  # 3 weeks * 7 days
+
+    # Loop through each period
+    for period in range(
+        periods + 1
+    ):  # +1 to include the last period which may be < 3 weeks
+        period_start = start_date + timedelta(weeks=3 * period)
+        period_end = min(period_start + timedelta(weeks=3), end_date)
+        period_df = df[
+            (df[order_timestamp] >= period_start) & (df[order_timestamp] < period_end)
+        ]
+
+        # Check if the period has orders over 90% of the days
+        unique_order_days = period_df[order_timestamp].dt.date.nunique()
+        if unique_order_days >= 5:  # At least 19 days with orders in a 21-day period
+
+            # Calculate profits for this period
+            period_profit = calculate_profit_by_day_period(period_df, time_intervals)
+            period_profit["Period"] = period + 1
+            # Append the period's profits to the results DataFrame
+            profit_results = pd.concat(
+                [profit_results, period_profit.to_frame(name=f"Period {period + 1}").T]
+            )
+        else:
+            # Handle periods with insufficient data (optional, based on your needs)
+            print(
+                f"Period {period + 1} skipped due to insufficient order days ({unique_order_days} days)"
+            )
+
+    profit_results.reset_index(drop=True, inplace=True)
+    return profit_results
+
+
+def plot_profits_over_time(df):
+    # Print the DataFrame columns for debugging
+    print(df.columns)
+
+    fig = go.Figure()
+
+    # Exclude the 'Period' column from the columns to iterate over
+    # This assumes 'Period' is the name of the column to exclude
+    intervals = [col for col in df.columns if col != "Period"]
+
+    # Iterate over the intervals (all columns except 'Period')
+    for interval in intervals:
+        fig.add_trace(
+            go.Scatter(
+                x=df["Period"],
+                y=df[interval],
+                mode="lines+markers",
+                name=interval,
+            )
+        )
+
+    # Update the layout to add titles and adjust axis labels
+    fig.update_layout(
+        title="Profit Changes Over Time by Day Period",
+        xaxis_title="Period",
+        yaxis_title="Profit",
+        legend_title="Day Period",
+    )
+
+    # Display the figure
+    fig.show()
+
+
+def generate_menu_matrix(df: pd.DataFrame):
+    # Calculate profit for each item
+
+    #!NOTE: THIS IS SIMPLIFIED BECAUSE THERE ARE NO MODIFIERS
+    df["item_revenue"] = (df["item_quantity"] * df["item_fractional_price"]) / 100
+    df["item_cost"] = (df["item_quantity"] * df["item_fractional_cost"]) / 100
+
+    # Aggregate data to calculate popularity and profitability(profit-margin) for each item
+    item_popularity = df.groupby("item_name")["item_quantity"].sum()
+    item_revenue = df.groupby("item_name")["item_revenue"].sum()
+    item_cost = df.groupby("item_name")["item_cost"].sum()
+    item_profitability = (item_revenue - item_cost) / item_revenue
+
+    # Calculate thresholds for popularity and profitability
+    popularity_threshold = item_popularity.quantile(0.5)  # Adjust as needed
+    profitability_threshold = item_profitability.quantile(0.5)  # Adjust as needed
+
+    # Categorize items
+    def categorize_item(row):
+        item_name = row["item_name"]
+        popularity = item_popularity.get(item_name, 0)
+        profitability = item_profitability.get(item_name, 0)
+
+        if (
+            popularity >= popularity_threshold
+            and profitability >= profitability_threshold
+        ):
+            return "Star"
+        elif (
+            popularity < popularity_threshold
+            and profitability >= profitability_threshold
+        ):
+            return "Puzzle"
+        elif (
+            popularity >= popularity_threshold
+            and profitability < profitability_threshold
+        ):
+            return "Cash Cow"
+        else:
+            return "Dud"
+
+    df["category"] = df.apply(categorize_item, axis=1)
+    # Adding popularity and profitability to the dataframe
+    df["item_popularity"] = df["item_name"].map(item_popularity)
+    df["item_profitability"] = df["item_name"].map(item_profitability)
+
+    return df
+
+
+def plot_menu_matrix(df):
+    fig = px.scatter(
+        df,
+        x="item_profitability",
+        y="item_popularity",
+        color="category",
+        hover_name="item_name",
+        title="Menu Matrix",
+        labels={"item_profitability": "Profitability", "item_popularity": "Popularity"},
+        color_discrete_map={
+            "Star": "blue",
+            "Puzzle": "green",
+            "Cash Cow": "orange",
+            "Dud": "red",
+        },
+        opacity=0.7,
+    )
+
+    # Add text annotations next to each point
+    for i, row in df.iterrows():
+        fig.add_annotation(
+            x=row["item_profitability"],
+            y=row["item_popularity"],
+            text=row["item_name"],
+            showarrow=False,
+            font=dict(size=8),
+            xshift=5,
+            yshift=10,
+        )
+
+    fig.show()
