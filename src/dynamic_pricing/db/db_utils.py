@@ -355,7 +355,8 @@ if __name__ == "__main__":
     with get_db_connection() as conn:
         print(len(orders_data))
         # order number 238 ends 7/8/2023
-        for order_data in orders_data[298:500]:
+        # already processed: [298:1500]
+        for order_data in orders_data[1500:]:
             try:
                 insert_order_data(conn, "nostimo", order_data, is_webhook=False)
                 conn.commit()
