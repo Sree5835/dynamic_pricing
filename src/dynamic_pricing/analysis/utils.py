@@ -38,9 +38,100 @@ def calculate_revenue(df: pd.DataFrame):
     return df
 
 
-def plot_average_orders_per_interval(df: pd.DataFrame, interval: int):
+def plot_mean_and_median_statistics_by_interval(
+    mean_statistic: pd.DataFrame,
+    median_statistic: pd.DataFrame,
+    interval: int,
+    x_label: str,
+    y_label: str,
+    title: str,
+):
     # Calculate the total number of intervals in a day based on the given interval
     num_intervals = (24 * 60) // interval
+
+    # Generate the x-axis labels for the hour of the day
+    x_labels = [f"{hour:02d}" for hour in range(24)]
+
+    # Plotting both mean and median
+    plt.figure(figsize=(12, 6))
+    plt.plot(
+        mean_statistic,
+        marker="o",
+        linestyle="-",
+        color="blue",
+        markersize=6,
+        label="Mean",
+    )
+    plt.plot(
+        median_statistic,
+        marker="x",
+        linestyle="--",
+        color="red",
+        markersize=6,
+        label="Median",
+    )
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.xticks(range(0, num_intervals, 60 // interval), x_labels)
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+def plot_mean_and_median_statistics_by_weekday(
+    mean_statistic: pd.DataFrame,
+    median_statistic: pd.DataFrame,
+    x_label: str,
+    y_label: str,
+    title: str,
+):
+    # Define the order of days for proper sorting in the plot
+    weekdays = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+
+    # Reindex the DataFrames to include all weekdays in the desired order
+    mean_statistic = mean_statistic.reindex(weekdays)
+    median_statistic = median_statistic.reindex(weekdays)
+
+    # Generate the x-axis labels for the day of the week
+    x_labels = weekdays
+
+    # Plotting both mean and median number of orders by day of the week as a line plot
+    plt.figure(figsize=(8, 6))
+    plt.plot(
+        mean_statistic,
+        marker="o",
+        linestyle="-",
+        color="blue",
+        markersize=6,
+        label="Average",
+    )
+    plt.plot(
+        median_statistic,
+        marker="x",
+        linestyle="--",
+        color="red",
+        markersize=6,
+        label="Median",
+    )
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.xticks(range(len(weekdays)), x_labels, rotation=45)
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+def plot_average_orders_per_interval(df: pd.DataFrame, interval: int):
 
     # Create a new column for the interval index
     df.loc[:, "interval_index"] = (
@@ -63,39 +154,19 @@ def plot_average_orders_per_interval(df: pd.DataFrame, interval: int):
         .median()
     )
 
-    # Generate the x-axis labels for the hour of the day
-    x_labels = [f"{hour:02d}" for hour in range(24)]
-
-    # Plotting both mean and median
-    plt.figure(figsize=(12, 6))
-    plt.plot(
+    plot_mean_and_median_statistics_by_interval(
         actual_average_orders,
-        marker="o",
-        linestyle="-",
-        color="blue",
-        markersize=6,
-        label="Mean",
-    )
-    plt.plot(
         median_orders,
-        marker="x",
-        linestyle="--",
-        color="red",
-        markersize=6,
-        label="Median",
+        interval,
+        "Hour of the Day",
+        "Number of Orders",
+        f"Mean and Median Number of Orders per {interval}-min on an Average Day",
     )
-    plt.xlabel("Hour of the Day")
-    plt.ylabel("Number of Orders")
-    plt.title(f"Average Number of Orders per {interval}-min on an Average Day")
-    plt.xticks(range(0, num_intervals, 60 // interval), x_labels)
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+
+    return actual_average_orders, median_orders
 
 
 def plot_average_revenue_per_interval(df: pd.DataFrame, interval: int):
-    # Calculate the total number of intervals in a day based on the given interval
-    num_intervals = (24 * 60) // interval
 
     df = calculate_revenue(df)
     # print(df["revenue"])
@@ -120,34 +191,15 @@ def plot_average_revenue_per_interval(df: pd.DataFrame, interval: int):
         .median()
     )
 
-    # Generate the x-axis labels for the hour of the day
-    x_labels = [f"{hour:02d}" for hour in range(24)]
-
-    # Plot both mean and median revenue per interval
-    plt.figure(figsize=(12, 6))
-    plt.plot(
+    plot_mean_and_median_statistics_by_interval(
         mean_revenue,
-        marker="o",
-        linestyle="-",
-        color="blue",
-        markersize=6,
-        label="Mean",
-    )
-    plt.plot(
         median_revenue,
-        marker="x",
-        linestyle="--",
-        color="red",
-        markersize=6,
-        label="Median",
+        interval,
+        "Hour of the Day",
+        "Average Revenue",
+        f"Mean and Median Revenue per {interval}-min on an Average Day",
     )
-    plt.xlabel("Hour of the Day")
-    plt.ylabel("Average Revenue")
-    plt.title(f"Average Revenue per {interval}-min on an Average Day")
-    plt.xticks(range(0, num_intervals, int(60 / interval)), x_labels)
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+    return mean_revenue, median_revenue
 
 
 def plot_items_sold(df):
@@ -167,7 +219,7 @@ def plot_average_orders_by_day_of_week(df: pd.DataFrame):
     # Extract the day of the week from the order_datetime column
     df.loc[:, "day_of_week"] = df[order_timestamp].dt.day_name()
 
-    # Group by day of the week and calculate both average and median number of orders
+    # Group by day of the week and calculate both mean and median number of orders
     average_orders = (
         df.groupby(["day_of_week", df[order_timestamp].dt.date])
         .size()
@@ -181,49 +233,14 @@ def plot_average_orders_by_day_of_week(df: pd.DataFrame):
         .median()
     )
 
-    # Define the order of days for proper sorting in the plot
-    weekdays = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-    ]
-
-    # Reindex the DataFrames to include all weekdays in the desired order
-    average_orders = average_orders.reindex(weekdays)
-    median_orders = median_orders.reindex(weekdays)
-
-    # Generate the x-axis labels for the day of the week
-    x_labels = weekdays
-
-    # Plotting both average and median number of orders by day of the week as a line plot
-    plt.figure(figsize=(8, 6))
-    plt.plot(
+    plot_mean_and_median_statistics_by_weekday(
         average_orders,
-        marker="o",
-        linestyle="-",
-        color="blue",
-        markersize=6,
-        label="Average",
-    )
-    plt.plot(
         median_orders,
-        marker="x",
-        linestyle="--",
-        color="red",
-        markersize=6,
-        label="Median",
+        "Day of the Week",
+        "Number of Orders",
+        "Mean and Median Number of Orders by Day of the Week",
     )
-    plt.xlabel("Day of the Week")
-    plt.ylabel("Number of Orders")
-    plt.title("Average and Median Number of Orders by Day of the Week")
-    plt.xticks(range(len(weekdays)), x_labels, rotation=45)
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+    return average_orders, median_orders
 
 
 def plot_average_revenue_by_day_of_week(df: pd.DataFrame):
@@ -246,56 +263,18 @@ def plot_average_revenue_by_day_of_week(df: pd.DataFrame):
         .median()
     )
 
-    # Define the order of days for proper sorting in the plot
-    weekdays = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-    ]
-
-    # Reindex the DataFrames to include all weekdays in the desired order
-    average_revenue_by_day = average_revenue_by_day.reindex(weekdays)
-    median_revenue_by_day = median_revenue_by_day.reindex(weekdays)
-
-    # Generate the x-axis labels for the day of the week
-    x_labels = weekdays
-
-    # Plotting both mean and median revenue by day of the week as a line plot
-    plt.figure(figsize=(8, 6))
-    plt.plot(
+    plot_mean_and_median_statistics_by_weekday(
         average_revenue_by_day,
-        marker="o",
-        linestyle="-",
-        color="blue",
-        markersize=6,
-        label="Mean",
-    )
-    plt.plot(
         median_revenue_by_day,
-        marker="x",
-        linestyle="--",
-        color="red",
-        markersize=6,
-        label="Median",
+        "Day of the Week",
+        "Revenue",
+        "Mean and Median Revenue by Day of the Week",
     )
-    plt.xlabel("Day of the Week")
-    plt.ylabel("Revenue")
-    plt.title("Average and Median Revenue by Day of the Week")
-    plt.xticks(range(len(weekdays)), x_labels, rotation=45)
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+    return average_revenue_by_day, median_revenue_by_day
 
 
 def time_difference_in_order_acceptance_per_interval(df: pd.DataFrame, interval: int):
-    order_timestamp = "order_placed_timestamp"
     accepted_timestamp = "order_updated_timestamp"
-    # Calculate the total number of intervals in a day based on the given interval
-    num_intervals = (24 * 60) // interval
 
     # Create a new column for the interval index
     df.loc[:, "interval_index"] = (
@@ -322,44 +301,22 @@ def time_difference_in_order_acceptance_per_interval(df: pd.DataFrame, interval:
         .median()
     )
 
-    # Generate the x-axis labels for the hour of the day
-    x_labels = [f"{hour:02d}" for hour in range(24)]
-
-    # Plotting both mean and median time difference in order acceptance per interval
-    plt.figure(figsize=(12, 6))
-    plt.plot(
+    plot_mean_and_median_statistics_by_interval(
         mean_time_difference,
-        marker="o",
-        linestyle="-",
-        color="blue",
-        markersize=6,
-        label="Mean",
-    )
-    plt.plot(
         median_time_difference,
-        marker="x",
-        linestyle="--",
-        color="red",
-        markersize=6,
-        label="Median",
+        interval,
+        "Hour of the Day",
+        "Time Difference in Order Acceptance (minutes)",
+        f"Mean and Median Time Difference in Order Acceptance per {interval}-min on an Average Day",
     )
-    plt.xlabel("Hour of the Day")
-    plt.ylabel("Time Difference in Order Acceptance (minutes)")
-    plt.title(
-        f"Average and Median Time Difference in Order Acceptance per {interval}-min on an Average Day"
-    )
-    plt.xticks(range(0, num_intervals, 60 // interval), x_labels)
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+
+    return mean_time_difference, median_time_difference
 
 
 def prep_time_per_interval(df: pd.DataFrame, interval: int):
     """Use https://api-docs.deliveroo.com/v2.0/docs/order-integration to understand why these timestamps are used"""
     start_prep_time = "order_start_prepping_at_timestamp"
     end_prep_time = "order_prepare_for_timestamp"
-    # Calculate the total number of intervals in a day based on the given interval
-    num_intervals = (24 * 60) // interval
 
     # Create a new column for the interval index
     df.loc[:, "interval_index"] = (
@@ -386,34 +343,15 @@ def prep_time_per_interval(df: pd.DataFrame, interval: int):
         .median()
     )
 
-    # Generate the x-axis labels for the hour of the day
-    x_labels = [f"{hour:02d}" for hour in range(24)]
-
-    # Plotting both mean and median prep time per interval
-    plt.figure(figsize=(12, 6))
-    plt.plot(
+    plot_mean_and_median_statistics_by_interval(
         mean_time_difference,
-        marker="o",
-        linestyle="-",
-        color="blue",
-        markersize=6,
-        label="Mean",
-    )
-    plt.plot(
         median_time_difference,
-        marker="x",
-        linestyle="--",
-        color="red",
-        markersize=6,
-        label="Median",
+        interval,
+        "Hour of the Day",
+        "Prep Time Difference (minutes)",
+        f"Mean and Median Prep Time per {interval}-min on an Average Day",
     )
-    plt.xlabel("Hour of the Day")
-    plt.ylabel("Prep Time Difference (minutes)")
-    plt.title(f"Average and Median Prep Time per {interval}-min on an Average Day")
-    plt.xticks(range(0, num_intervals, 60 // interval), x_labels)
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+    return mean_time_difference, median_time_difference
 
 
 def calculate_revenue_by_day_period(df, time_intervals=None):
