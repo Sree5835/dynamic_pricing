@@ -16,28 +16,6 @@ def split_weekdays_and_weekends(df: pd.DataFrame, time_col: str):
     return weekdays_df, weekend_df
 
 
-def calculate_revenue(df: pd.DataFrame):
-    # Calculate the actual average revenue for each interval on an average day
-    df = df[
-        [
-            "order_id",
-            "item_quantity",
-            "item_fractional_price",
-            "modifier_fractional_price",
-            "modifier_quantity",
-            order_timestamp,
-        ]
-    ].copy()
-    df.fillna(0, inplace=True)
-    df.loc[:, "order_value"] = (
-        (df["item_fractional_price"] * df["item_quantity"])
-        + (df["modifier_fractional_price"] * df["modifier_quantity"])
-    ) / 100
-    # print(df.groupby("order_id").head())
-    df.loc[:, "revenue"] = df.groupby("order_id")["order_value"].transform("sum")
-    return df
-
-
 def plot_mean_and_median_statistics_by_interval(
     mean_statistic: pd.DataFrame,
     median_statistic: pd.DataFrame,
@@ -131,7 +109,62 @@ def plot_mean_and_median_statistics_by_weekday(
     plt.show()
 
 
-def plot_average_orders_per_interval(df: pd.DataFrame, interval: int):
+def plot_profits_over_time(df):
+    # Print the DataFrame columns for debugging
+    print(df.columns)
+
+    fig = go.Figure()
+
+    # Exclude the 'Period' column from the columns to iterate over
+    # This assumes 'Period' is the name of the column to exclude
+    intervals = [col for col in df.columns if col != "Period"]
+
+    # Iterate over the intervals (all columns except 'Period')
+    for interval in intervals:
+        fig.add_trace(
+            go.Scatter(
+                x=df["Period"],
+                y=df[interval],
+                mode="lines+markers",
+                name=interval,
+            )
+        )
+
+    # Update the layout to add titles and adjust axis labels
+    fig.update_layout(
+        title="Profit Changes Over Time by Day Period",
+        xaxis_title="Period",
+        yaxis_title="Profit",
+        legend_title="Day Period",
+    )
+
+    # Display the figure
+    fig.show()
+
+
+def calculate_revenue(df: pd.DataFrame):
+    # Calculate the actual average revenue for each interval on an average day
+    df = df[
+        [
+            "order_id",
+            "item_quantity",
+            "item_fractional_price",
+            "modifier_fractional_price",
+            "modifier_quantity",
+            order_timestamp,
+        ]
+    ].copy()
+    df.fillna(0, inplace=True)
+    df.loc[:, "order_value"] = (
+        (df["item_fractional_price"] * df["item_quantity"])
+        + (df["modifier_fractional_price"] * df["modifier_quantity"])
+    ) / 100
+    # print(df.groupby("order_id").head())
+    df.loc[:, "revenue"] = df.groupby("order_id")["order_value"].transform("sum")
+    return df
+
+
+def calculate_average_orders_per_interval(df: pd.DataFrame, interval: int, plot=False):
 
     # Create a new column for the interval index
     df.loc[:, "interval_index"] = (
@@ -154,19 +187,20 @@ def plot_average_orders_per_interval(df: pd.DataFrame, interval: int):
         .median()
     )
 
-    plot_mean_and_median_statistics_by_interval(
-        actual_average_orders,
-        median_orders,
-        interval,
-        "Hour of the Day",
-        "Number of Orders",
-        f"Mean and Median Number of Orders per {interval}-min on an Average Day",
-    )
+    if plot:
+        plot_mean_and_median_statistics_by_interval(
+            actual_average_orders,
+            median_orders,
+            interval,
+            "Hour of the Day",
+            "Number of Orders",
+            f"Mean and Median Number of Orders per {interval}-min on an Average Day",
+        )
 
     return actual_average_orders, median_orders
 
 
-def plot_average_revenue_per_interval(df: pd.DataFrame, interval: int):
+def calculate_average_revenue_per_interval(df: pd.DataFrame, interval: int, plot=False):
 
     df = calculate_revenue(df)
     # print(df["revenue"])
@@ -191,14 +225,15 @@ def plot_average_revenue_per_interval(df: pd.DataFrame, interval: int):
         .median()
     )
 
-    plot_mean_and_median_statistics_by_interval(
-        mean_revenue,
-        median_revenue,
-        interval,
-        "Hour of the Day",
-        "Average Revenue",
-        f"Mean and Median Revenue per {interval}-min on an Average Day",
-    )
+    if plot:
+        plot_mean_and_median_statistics_by_interval(
+            mean_revenue,
+            median_revenue,
+            interval,
+            "Hour of the Day",
+            "Average Revenue",
+            f"Mean and Median Revenue per {interval}-min on an Average Day",
+        )
     return mean_revenue, median_revenue
 
 
@@ -215,7 +250,7 @@ def plot_items_sold(df):
     plt.show()
 
 
-def plot_average_orders_by_day_of_week(df: pd.DataFrame):
+def calculate_average_orders_by_day_of_week(df: pd.DataFrame, plot=False):
     # Extract the day of the week from the order_datetime column
     df.loc[:, "day_of_week"] = df[order_timestamp].dt.day_name()
 
@@ -233,17 +268,18 @@ def plot_average_orders_by_day_of_week(df: pd.DataFrame):
         .median()
     )
 
-    plot_mean_and_median_statistics_by_weekday(
-        average_orders,
-        median_orders,
-        "Day of the Week",
-        "Number of Orders",
-        "Mean and Median Number of Orders by Day of the Week",
-    )
+    if plot:
+        plot_mean_and_median_statistics_by_weekday(
+            average_orders,
+            median_orders,
+            "Day of the Week",
+            "Number of Orders",
+            "Mean and Median Number of Orders by Day of the Week",
+        )
     return average_orders, median_orders
 
 
-def plot_average_revenue_by_day_of_week(df: pd.DataFrame):
+def calculate_average_revenue_by_day_of_week(df: pd.DataFrame, plot=False):
     # Calculate the average revenue by day of the week
     df = calculate_revenue(df)
 
@@ -263,17 +299,20 @@ def plot_average_revenue_by_day_of_week(df: pd.DataFrame):
         .median()
     )
 
-    plot_mean_and_median_statistics_by_weekday(
-        average_revenue_by_day,
-        median_revenue_by_day,
-        "Day of the Week",
-        "Revenue",
-        "Mean and Median Revenue by Day of the Week",
-    )
+    if plot:
+        plot_mean_and_median_statistics_by_weekday(
+            average_revenue_by_day,
+            median_revenue_by_day,
+            "Day of the Week",
+            "Revenue",
+            "Mean and Median Revenue by Day of the Week",
+        )
     return average_revenue_by_day, median_revenue_by_day
 
 
-def time_difference_in_order_acceptance_per_interval(df: pd.DataFrame, interval: int):
+def calculate_time_difference_in_order_acceptance_per_interval(
+    df: pd.DataFrame, interval: int, plot=False
+):
     accepted_timestamp = "order_updated_timestamp"
 
     # Create a new column for the interval index
@@ -301,19 +340,20 @@ def time_difference_in_order_acceptance_per_interval(df: pd.DataFrame, interval:
         .median()
     )
 
-    plot_mean_and_median_statistics_by_interval(
-        mean_time_difference,
-        median_time_difference,
-        interval,
-        "Hour of the Day",
-        "Time Difference in Order Acceptance (minutes)",
-        f"Mean and Median Time Difference in Order Acceptance per {interval}-min on an Average Day",
-    )
+    if plot:
+        plot_mean_and_median_statistics_by_interval(
+            mean_time_difference,
+            median_time_difference,
+            interval,
+            "Hour of the Day",
+            "Time Difference in Order Acceptance (minutes)",
+            f"Mean and Median Time Difference in Order Acceptance per {interval}-min on an Average Day",
+        )
 
     return mean_time_difference, median_time_difference
 
 
-def prep_time_per_interval(df: pd.DataFrame, interval: int):
+def calculate_prep_time_per_interval(df: pd.DataFrame, interval: int, plot=False):
     """Use https://api-docs.deliveroo.com/v2.0/docs/order-integration to understand why these timestamps are used"""
     start_prep_time = "order_start_prepping_at_timestamp"
     end_prep_time = "order_prepare_for_timestamp"
@@ -343,14 +383,15 @@ def prep_time_per_interval(df: pd.DataFrame, interval: int):
         .median()
     )
 
-    plot_mean_and_median_statistics_by_interval(
-        mean_time_difference,
-        median_time_difference,
-        interval,
-        "Hour of the Day",
-        "Prep Time Difference (minutes)",
-        f"Mean and Median Prep Time per {interval}-min on an Average Day",
-    )
+    if plot:
+        plot_mean_and_median_statistics_by_interval(
+            mean_time_difference,
+            median_time_difference,
+            interval,
+            "Hour of the Day",
+            "Prep Time Difference (minutes)",
+            f"Mean and Median Prep Time per {interval}-min on an Average Day",
+        )
     return mean_time_difference, median_time_difference
 
 
@@ -402,7 +443,40 @@ def calculate_profit_by_day_period(df, time_intervals=None):
     return df.groupby("interval_label", observed=True)["profit"].sum()
 
 
-def calculate_profits_over_periods(df, time_intervals=None):
+def plot_profits_over_time(df):
+    # Print the DataFrame columns for debugging
+    print(df.columns)
+
+    fig = go.Figure()
+
+    # Exclude the 'Period' column from the columns to iterate over
+    # This assumes 'Period' is the name of the column to exclude
+    intervals = [col for col in df.columns if col != "Period"]
+
+    # Iterate over the intervals (all columns except 'Period')
+    for interval in intervals:
+        fig.add_trace(
+            go.Scatter(
+                x=df["Period"],
+                y=df[interval],
+                mode="lines+markers",
+                name=interval,
+            )
+        )
+
+    # Update the layout to add titles and adjust axis labels
+    fig.update_layout(
+        title="Profit Changes Over Time by Day Period",
+        xaxis_title="Period",
+        yaxis_title="Profit",
+        legend_title="Day Period",
+    )
+
+    # Display the figure
+    fig.show()
+
+
+def calculate_profits_over_periods(df, time_intervals=None, plot=False):
     # Ensure df is sorted by order_timestamp
     df.sort_values(by=order_timestamp, inplace=True)
 
@@ -445,43 +519,13 @@ def calculate_profits_over_periods(df, time_intervals=None):
             )
 
     profit_results.reset_index(drop=True, inplace=True)
+
+    if plot:
+        plot_profits_over_time(profit_results)
     return profit_results
 
 
-def plot_profits_over_time(df):
-    # Print the DataFrame columns for debugging
-    print(df.columns)
-
-    fig = go.Figure()
-
-    # Exclude the 'Period' column from the columns to iterate over
-    # This assumes 'Period' is the name of the column to exclude
-    intervals = [col for col in df.columns if col != "Period"]
-
-    # Iterate over the intervals (all columns except 'Period')
-    for interval in intervals:
-        fig.add_trace(
-            go.Scatter(
-                x=df["Period"],
-                y=df[interval],
-                mode="lines+markers",
-                name=interval,
-            )
-        )
-
-    # Update the layout to add titles and adjust axis labels
-    fig.update_layout(
-        title="Profit Changes Over Time by Day Period",
-        xaxis_title="Period",
-        yaxis_title="Profit",
-        legend_title="Day Period",
-    )
-
-    # Display the figure
-    fig.show()
-
-
-def generate_menu_matrix(df: pd.DataFrame):
+def generate_menu_matrix(df: pd.DataFrame, plot=False):
     # Calculate profit for each item
 
     #!NOTE: THIS IS SIMPLIFIED BECAUSE THERE ARE NO MODIFIERS
@@ -526,6 +570,9 @@ def generate_menu_matrix(df: pd.DataFrame):
     # Adding popularity and profitability to the dataframe
     df["item_popularity"] = df["item_name"].map(item_popularity)
     df["item_profitability"] = df["item_name"].map(item_profitability)
+
+    if plot:
+        plot_menu_matrix(df)
 
     return df
 
