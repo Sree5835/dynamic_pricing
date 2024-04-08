@@ -5,6 +5,7 @@ import numpy as np
 from datetime import timedelta
 import plotly.graph_objects as go
 import plotly.express as px
+from typing import List
 
 
 order_timestamp = "order_placed_timestamp"
@@ -165,14 +166,14 @@ def calculate_revenue(df: pd.DataFrame):
 
 
 def calculate_average_orders_per_interval(df: pd.DataFrame, interval: int, plot=False):
-
+    df[order_timestamp] = pd.to_datetime(df[order_timestamp])
     # Create a new column for the interval index
     df.loc[:, "interval_index"] = (
         df[order_timestamp].dt.hour * 60 + df[order_timestamp].dt.minute
     ) // interval
 
     # Calculate the actual average number of orders for each interval on an average day
-    actual_average_orders = (
+    mean_orders = (
         df.groupby(["interval_index", df[order_timestamp].dt.date])
         .size()
         .groupby("interval_index")
@@ -189,7 +190,7 @@ def calculate_average_orders_per_interval(df: pd.DataFrame, interval: int, plot=
 
     if plot:
         plot_mean_and_median_statistics_by_interval(
-            actual_average_orders,
+            mean_orders,
             median_orders,
             interval,
             "Hour of the Day",
@@ -197,11 +198,11 @@ def calculate_average_orders_per_interval(df: pd.DataFrame, interval: int, plot=
             f"Mean and Median Number of Orders per {interval}-min on an Average Day",
         )
 
-    return actual_average_orders, median_orders
+    return mean_orders, median_orders
 
 
 def calculate_average_revenue_per_interval(df: pd.DataFrame, interval: int, plot=False):
-
+    df[order_timestamp] = pd.to_datetime(df[order_timestamp])
     df = calculate_revenue(df)
     # print(df["revenue"])
     print(df.head())
@@ -212,14 +213,14 @@ def calculate_average_revenue_per_interval(df: pd.DataFrame, interval: int, plot
 
     # Calculate the mean and median revenue for each interval
     mean_revenue = (
-        df.groupby(["interval_index", df[order_timestamp].dt.date])["revenue"]
+        df.groupby(["interval_index", df[order_timestamp].dt.date])["order_value"]
         .sum()
         .groupby("interval_index")
         .mean()
     )
 
     median_revenue = (
-        df.groupby(["interval_index", df[order_timestamp].dt.date])["revenue"]
+        df.groupby(["interval_index", df[order_timestamp].dt.date])["order_value"]
         .sum()
         .groupby("interval_index")
         .median()
@@ -237,83 +238,12 @@ def calculate_average_revenue_per_interval(df: pd.DataFrame, interval: int, plot
     return mean_revenue, median_revenue
 
 
-def plot_items_sold(df):
-    df = df[["order_id", "item_name", "item_quantity"]].copy()
-
-    plt.figure(figsize=(6, 12))
-    plt.bar(df["item_name"], df["item_quantity"])
-    plt.ylabel("Products")
-    plt.xlabel("Units Sold")
-    plt.title("Products Sold")
-    plt.xticks(rotation=90)
-    plt.subplots_adjust(left=0.5)  # Adjust the value as needed
-    plt.show()
-
-
-def calculate_average_orders_by_day_of_week(df: pd.DataFrame, plot=False):
-    # Extract the day of the week from the order_datetime column
-    df.loc[:, "day_of_week"] = df[order_timestamp].dt.day_name()
-
-    # Group by day of the week and calculate both mean and median number of orders
-    average_orders = (
-        df.groupby(["day_of_week", df[order_timestamp].dt.date])
-        .size()
-        .groupby("day_of_week")
-        .mean()
-    )
-    median_orders = (
-        df.groupby(["day_of_week", df[order_timestamp].dt.date])
-        .size()
-        .groupby("day_of_week")
-        .median()
-    )
-
-    if plot:
-        plot_mean_and_median_statistics_by_weekday(
-            average_orders,
-            median_orders,
-            "Day of the Week",
-            "Number of Orders",
-            "Mean and Median Number of Orders by Day of the Week",
-        )
-    return average_orders, median_orders
-
-
-def calculate_average_revenue_by_day_of_week(df: pd.DataFrame, plot=False):
-    # Calculate the average revenue by day of the week
-    df = calculate_revenue(df)
-
-    # Extract the day of the week from the order_datetime column
-    df.loc[:, "day_of_week"] = df[order_timestamp].dt.day_name()
-
-    average_revenue_by_day = (
-        df.groupby(["day_of_week", df[order_timestamp].dt.date])["revenue"]
-        .sum()
-        .groupby("day_of_week")
-        .mean()
-    )
-    median_revenue_by_day = (
-        df.groupby(["day_of_week", df[order_timestamp].dt.date])["revenue"]
-        .sum()
-        .groupby("day_of_week")
-        .median()
-    )
-
-    if plot:
-        plot_mean_and_median_statistics_by_weekday(
-            average_revenue_by_day,
-            median_revenue_by_day,
-            "Day of the Week",
-            "Revenue",
-            "Mean and Median Revenue by Day of the Week",
-        )
-    return average_revenue_by_day, median_revenue_by_day
-
-
 def calculate_time_difference_in_order_acceptance_per_interval(
     df: pd.DataFrame, interval: int, plot=False
 ):
     accepted_timestamp = "order_updated_timestamp"
+    df[order_timestamp] = pd.to_datetime(df[order_timestamp])
+    df[accepted_timestamp] = pd.to_datetime(df[accepted_timestamp])
 
     # Create a new column for the interval index
     df.loc[:, "interval_index"] = (
@@ -357,6 +287,8 @@ def calculate_prep_time_per_interval(df: pd.DataFrame, interval: int, plot=False
     """Use https://api-docs.deliveroo.com/v2.0/docs/order-integration to understand why these timestamps are used"""
     start_prep_time = "order_start_prepping_at_timestamp"
     end_prep_time = "order_prepare_for_timestamp"
+    df[start_prep_time] = pd.to_datetime(df[start_prep_time])
+    df[end_prep_time] = pd.to_datetime(df[end_prep_time])
 
     # Create a new column for the interval index
     df.loc[:, "interval_index"] = (
@@ -395,16 +327,88 @@ def calculate_prep_time_per_interval(df: pd.DataFrame, interval: int, plot=False
     return mean_time_difference, median_time_difference
 
 
-def calculate_revenue_by_day_period(df, time_intervals=None):
+def plot_items_sold(df):
+    df = df[["order_id", "item_name", "item_quantity"]].copy()
 
-    if time_intervals is None:
-        raise ValueError("Please provide time intervals.")
+    plt.figure(figsize=(6, 12))
+    plt.bar(df["item_name"], df["item_quantity"])
+    plt.ylabel("Products")
+    plt.xlabel("Units Sold")
+    plt.title("Products Sold")
+    plt.xticks(rotation=90)
+    plt.subplots_adjust(left=0.5)  # Adjust the value as needed
+    plt.show()
+
+
+def calculate_average_orders_by_day_of_week(df: pd.DataFrame, plot=False):
+    df[order_timestamp] = pd.to_datetime(df[order_timestamp])
+
+    # Extract the day of the week from the order_timestamp column
+    df["day_of_week"] = df[order_timestamp].dt.day_name()
+
+    # Count unique orders per day
+    daily_orders = (
+        df.groupby(["day_of_week", df[order_timestamp].dt.date])["order_id"]
+        .nunique()
+        .reset_index(name="order_count")
+    )
+
+    # Calculate mean and median orders per day of the week directly
+    mean_orders = daily_orders.groupby("day_of_week")["order_count"].mean()
+    median_orders = daily_orders.groupby("day_of_week")["order_count"].median()
+
+    if plot:
+        plot_mean_and_median_statistics_by_weekday(
+            mean_orders,
+            median_orders,
+            "Day of the Week",
+            "Number of Orders",
+            "Mean and Median Number of Orders by Day of the Week",
+        )
+    return mean_orders, median_orders
+
+
+def calculate_average_revenue_by_day_of_week(df: pd.DataFrame, plot=False):
+    df[order_timestamp] = pd.to_datetime(df[order_timestamp])
+
+    # Assuming 'calculate_revenue' function exists and adds an 'order_value' column to df
+    df = calculate_revenue(df)
+
+    # Extract the day of the week from the order_datetime column
+    df["day_of_week"] = df[order_timestamp].dt.day_name()
+
+    # Calculate daily revenue by summing 'order_value' for each day and order_id
+    daily_revenue = (
+        df.groupby(["day_of_week", df[order_timestamp].dt.date])
+        .agg(daily_revenue=("order_value", "sum"))
+        .reset_index()
+    )
+
+    # Calculate mean and median revenue per day of the week
+    mean_revenue_by_day = daily_revenue.groupby("day_of_week")["daily_revenue"].mean()
+    median_revenue_by_day = daily_revenue.groupby("day_of_week")[
+        "daily_revenue"
+    ].median()
+
+    if plot:
+        plot_mean_and_median_statistics_by_weekday(
+            mean_revenue_by_day,
+            median_revenue_by_day,
+            "Day of the Week",
+            "Revenue",
+            "Mean and Median Revenue by Day of the Week",
+        )
+    return mean_revenue_by_day, median_revenue_by_day
+
+
+def calculate_revenue_by_day_period(df: pd.DataFrame, time_intervals: List[str]):
+    df[order_timestamp] = pd.to_datetime(df[order_timestamp])
+    time_intervals = [pd.to_datetime(str(time)).time() for time in time_intervals]
 
     df.loc[:, "order_value"] = (
         (df["item_fractional_price"] * df["item_quantity"])
         + (df["modifier_fractional_price"] * df["modifier_quantity"])
     ) / 100
-    time_intervals = [pd.to_datetime(str(time)).time() for time in time_intervals]
 
     interval_labels = [
         f"{time_intervals[i]} to {time_intervals[i+1]}"
@@ -418,18 +422,17 @@ def calculate_revenue_by_day_period(df, time_intervals=None):
     return df.groupby("interval_label", observed=True)["order_value"].sum()
 
 
-def calculate_profit_by_day_period(df, time_intervals=None):
-    if time_intervals is None:
-        raise ValueError("Please provide time intervals.")
+def calculate_profit_by_day_period(df: pd.DataFrame, time_intervals: List[str]):
+    df[order_timestamp] = pd.to_datetime(df[order_timestamp])
+    time_intervals = [pd.to_datetime(str(time)).time() for time in time_intervals]
 
     df.loc[:, "order_value"] = (
         (df["item_fractional_price"] * df["item_quantity"])
         + (df["modifier_fractional_price"] * df["modifier_quantity"])
     ) / 100
-
+    #! Note that currrently there are no modifier costs, but these can exist in
+    # the future
     df.loc[:, "profit"] = df["order_value"] - (df["item_fractional_cost"] / 100)
-
-    time_intervals = [pd.to_datetime(str(time)).time() for time in time_intervals]
 
     interval_labels = [
         f"{time_intervals[i]} to {time_intervals[i+1]}"
@@ -477,6 +480,7 @@ def plot_profits_over_time(df):
 
 
 def calculate_profits_over_periods(df, time_intervals=None, plot=False):
+    df[order_timestamp] = pd.to_datetime(df[order_timestamp])
     # Ensure df is sorted by order_timestamp
     df.sort_values(by=order_timestamp, inplace=True)
 
