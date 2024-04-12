@@ -16,3 +16,4 @@ six==1.16.0
 urllib3==2.0.7
 werkzeug==3.0.1
 zipp==3.17.0
+pytest==7.1.3
