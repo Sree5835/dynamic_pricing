@@ -1,0 +1,42 @@
+name: Python CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Create and activate virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+
+      - name: Install dependencies
+        run: |
+          source venv/bin/activate
+          pip install .
+
+      - name: Run tests
+        run: |
+          source venv/bin/activate
+          pytest --junitxml=test_report.xml
+
+      - name: Run pre-commit
+        run: |
+          source venv/bin/activate
+          pre-commit run --all-files --show-diff-on-failure
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-report
+          path: test_report.xml
