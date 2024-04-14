@@ -5,7 +5,10 @@ from typing import List
 
 import pandas as pd
 import sqlalchemy as sqla
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+
+load_dotenv()
 
 
 def get_db_connection():
@@ -361,7 +364,7 @@ if __name__ == "__main__":
 
     # Insert the data into the PostgreSQL database
     # try:
-    #     insert_order_data("nostimo", order_data["body"]["order"])
+    #     insert_order_data(os.getenv("PARTNER1"), order_data["body"]["order"])
     # except Exception as e:
     #     print(f"Error inserting order data: {e}")
 
@@ -369,7 +372,7 @@ if __name__ == "__main__":
     #     order_data = json.load(file)
 
     # try:
-    #     insert_order_data("nostimo", order_data, is_webhook=False)
+    #     insert_order_data(os.getenv("PARTNER1"), order_data, is_webhook=False)
     # except Exception as e:
     #     print(f"Error inserting order data: {e}")
 
@@ -384,7 +387,7 @@ if __name__ == "__main__":
         for order_data in orders_data[1500:]:
             try:
                 insert_order_data(
-                    conn, "nostimo", order_data, is_webhook=False
+                    conn, os.getenv("PARTNER1"), order_data, is_webhook=False
                 )
                 conn.commit()
             except Exception as e:

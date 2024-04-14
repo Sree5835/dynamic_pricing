@@ -25,9 +25,11 @@ def test_tables(connection: Connection):
 def test_insert_order_data(connection: Connection):
     with open("tests/test_data/test_order.json", "r") as file:
         order_data = json.load(file)
-    print(os.getenv("PARTNER1"))
     insert_order_data(
-        connection, "nostimo", order_data=order_data, is_webhook=False
+        connection,
+        os.getenv("PARTNER1"),
+        order_data=order_data,
+        is_webhook=False,
     )
     ans = connection.execute(
         text(
@@ -40,7 +42,7 @@ def test_insert_order_data(connection: Connection):
 
 
 def test_load_data(connection: Connection):
-    df: pd.DataFrame = load_order_data(connection, "nostimo")
+    df: pd.DataFrame = load_order_data(connection, os.getenv("PARTNER1"))
     assert df.shape == (3, 27)
     assert set(df["deliveroo_order_id"]) == {
         "gb:6606c495-e33a-4bde-b152-e3ddd4efe0ee"
