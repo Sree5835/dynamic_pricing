@@ -21,7 +21,6 @@ debugpy==1.8.1
 decorator==5.1.1
 defusedxml==0.7.1
 distlib==0.3.8
--e git+ssh://git@github.com/Sree5835/dynamic_pricing.git@f36051d66fa8800ba36e6869a235a39d269afa61#egg=dynamic_pricing
 exceptiongroup==1.2.0
 executing==2.0.1
 fastjsonschema==2.19.1
