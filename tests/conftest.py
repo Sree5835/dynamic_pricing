@@ -14,7 +14,7 @@ def psql_docker():
     container_name = "test_postgres"
 
     container = client.containers.run(
-        image="postgres:12",
+        image="postgres:12-alpine",
         auto_remove=True,
         environment=dict(
             POSTGRES_PASSWORD=POSTGRES_PASSWORD,
