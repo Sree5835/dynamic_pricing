@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify
-import requests
 import datetime
-from requests.auth import HTTPBasicAuth
 import os
+
+import requests
+from flask import Flask, jsonify, request
+from requests.auth import HTTPBasicAuth
 
 # NOTE this code was built for tablet-based sites ONLY
 
@@ -26,7 +27,10 @@ def get_bearer_token(prod=False):
         client_id = os.getenv("DEV_CLIENT_ID")
         secret = os.getenv("DEV_SECRET")
     response_access = requests.post(
-        url, auth=HTTPBasicAuth(client_id, secret), data=payload, headers=headers
+        url,
+        auth=HTTPBasicAuth(client_id, secret),
+        data=payload,
+        headers=headers,
     )
 
     return response_access.json()["access_token"]
@@ -58,7 +62,9 @@ def sync_status(order_id: str, payload: dict, prod: bool = False):
 
 def update_order_status(order_id: str, status: str, prod: bool = False):
     if prod:
-        url = f"https://api.developers.deliveroo.com/order/v1/orders/{order_id}"
+        url = (
+            f"https://api.developers.deliveroo.com/order/v1/orders/{order_id}"
+        )
     else:
         url = f"https://api-sandbox.developers.deliveroo.com/order/v1/orders/{order_id}"
 
@@ -72,7 +78,9 @@ def update_order_status(order_id: str, status: str, prod: bool = False):
         "Authorization": f"Bearer {get_bearer_token(prod)}",
     }
 
-    response_order_update = requests.patch(url, json=status_payload, headers=headers)
+    response_order_update = requests.patch(
+        url, json=status_payload, headers=headers
+    )
     return response_order_update.json()
 
 
@@ -83,7 +91,9 @@ def webhook(prod=False):
     if not prod:
         print(data)
     # current time like "2022-04-12T12:43:00.000Z"
-    date_time = datetime.datetime.now().isoformat(timespec="milliseconds")[:-3] + "Z"
+    date_time = (
+        datetime.datetime.now().isoformat(timespec="milliseconds")[:-3] + "Z"
+    )
     payload = {"status": "succeeded", "occurred_at": date_time}
 
     # order rejected by restaurant
@@ -135,7 +145,10 @@ def prod_webhook():
 
 @app.route("/", methods=["GET"])
 def test():
-    return jsonify({"message": "The API is working just load a valid URL"}), 200
+    return (
+        jsonify({"message": "The API is working just load a valid URL"}),
+        200,
+    )
 
 
 if __name__ == "__main__":

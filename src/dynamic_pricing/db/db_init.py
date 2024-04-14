@@ -1,7 +1,9 @@
-from dotenv import load_dotenv
 import os
-from sqlalchemy import text
+
 import sqlalchemy as sqla
+from dotenv import load_dotenv
+from sqlalchemy import text
+
 from dynamic_pricing.db.db_utils import get_db_connection
 
 load_dotenv()

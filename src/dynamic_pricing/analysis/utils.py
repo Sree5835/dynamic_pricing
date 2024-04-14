@@ -1,12 +1,12 @@
-import pandas as pd
-import matplotlib.pyplot as plt
 import itertools
-import numpy as np
 from datetime import timedelta
-import plotly.graph_objects as go
-import plotly.express as px
 from typing import List
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 
 order_timestamp = "order_placed_timestamp"
 
@@ -161,11 +161,15 @@ def calculate_revenue(df: pd.DataFrame):
         + (df["modifier_fractional_price"] * df["modifier_quantity"])
     ) / 100
     # print(df.groupby("order_id").head())
-    df.loc[:, "revenue"] = df.groupby("order_id")["order_value"].transform("sum")
+    df.loc[:, "revenue"] = df.groupby("order_id")["order_value"].transform(
+        "sum"
+    )
     return df
 
 
-def calculate_average_orders_per_interval(df: pd.DataFrame, interval: int, plot=False):
+def calculate_average_orders_per_interval(
+    df: pd.DataFrame, interval: int, plot=False
+):
     df[order_timestamp] = pd.to_datetime(df[order_timestamp])
     # Create a new column for the interval index
     df.loc[:, "interval_index"] = (
@@ -201,7 +205,9 @@ def calculate_average_orders_per_interval(df: pd.DataFrame, interval: int, plot=
     return mean_orders, median_orders
 
 
-def calculate_average_revenue_per_interval(df: pd.DataFrame, interval: int, plot=False):
+def calculate_average_revenue_per_interval(
+    df: pd.DataFrame, interval: int, plot=False
+):
     df[order_timestamp] = pd.to_datetime(df[order_timestamp])
     df = calculate_revenue(df)
     # print(df["revenue"])
@@ -213,14 +219,18 @@ def calculate_average_revenue_per_interval(df: pd.DataFrame, interval: int, plot
 
     # Calculate the mean and median revenue for each interval
     mean_revenue = (
-        df.groupby(["interval_index", df[order_timestamp].dt.date])["order_value"]
+        df.groupby(["interval_index", df[order_timestamp].dt.date])[
+            "order_value"
+        ]
         .sum()
         .groupby("interval_index")
         .mean()
     )
 
     median_revenue = (
-        df.groupby(["interval_index", df[order_timestamp].dt.date])["order_value"]
+        df.groupby(["interval_index", df[order_timestamp].dt.date])[
+            "order_value"
+        ]
         .sum()
         .groupby("interval_index")
         .median()
@@ -257,14 +267,18 @@ def calculate_time_difference_in_order_acceptance_per_interval(
 
     # Calculate both mean and median time difference for each interval on an average day
     mean_time_difference = (
-        df.groupby(["interval_index", df[order_timestamp].dt.date])["time_difference"]
+        df.groupby(["interval_index", df[order_timestamp].dt.date])[
+            "time_difference"
+        ]
         .mean()
         .groupby("interval_index")
         .mean()
     )
 
     median_time_difference = (
-        df.groupby(["interval_index", df[order_timestamp].dt.date])["time_difference"]
+        df.groupby(["interval_index", df[order_timestamp].dt.date])[
+            "time_difference"
+        ]
         .median()
         .groupby("interval_index")
         .median()
@@ -283,7 +297,9 @@ def calculate_time_difference_in_order_acceptance_per_interval(
     return mean_time_difference, median_time_difference
 
 
-def calculate_prep_time_per_interval(df: pd.DataFrame, interval: int, plot=False):
+def calculate_prep_time_per_interval(
+    df: pd.DataFrame, interval: int, plot=False
+):
     """Use https://api-docs.deliveroo.com/v2.0/docs/order-integration to understand why these timestamps are used"""
     start_prep_time = "order_start_prepping_at_timestamp"
     end_prep_time = "order_prepare_for_timestamp"
@@ -302,14 +318,18 @@ def calculate_prep_time_per_interval(df: pd.DataFrame, interval: int, plot=False
 
     # Calculate both mean and median time difference for each interval on an average day
     mean_time_difference = (
-        df.groupby(["interval_index", df[start_prep_time].dt.date])["time_difference"]
+        df.groupby(["interval_index", df[start_prep_time].dt.date])[
+            "time_difference"
+        ]
         .mean()
         .groupby("interval_index")
         .mean()
     )
 
     median_time_difference = (
-        df.groupby(["interval_index", df[start_prep_time].dt.date])["time_difference"]
+        df.groupby(["interval_index", df[start_prep_time].dt.date])[
+            "time_difference"
+        ]
         .median()
         .groupby("interval_index")
         .median()
@@ -385,7 +405,9 @@ def calculate_average_revenue_by_day_of_week(df: pd.DataFrame, plot=False):
     )
 
     # Calculate mean and median revenue per day of the week
-    mean_revenue_by_day = daily_revenue.groupby("day_of_week")["daily_revenue"].mean()
+    mean_revenue_by_day = daily_revenue.groupby("day_of_week")[
+        "daily_revenue"
+    ].mean()
     median_revenue_by_day = daily_revenue.groupby("day_of_week")[
         "daily_revenue"
     ].median()
@@ -401,9 +423,13 @@ def calculate_average_revenue_by_day_of_week(df: pd.DataFrame, plot=False):
     return mean_revenue_by_day, median_revenue_by_day
 
 
-def calculate_revenue_by_day_period(df: pd.DataFrame, time_intervals: List[str]):
+def calculate_revenue_by_day_period(
+    df: pd.DataFrame, time_intervals: List[str]
+):
     df[order_timestamp] = pd.to_datetime(df[order_timestamp])
-    time_intervals = [pd.to_datetime(str(time)).time() for time in time_intervals]
+    time_intervals = [
+        pd.to_datetime(str(time)).time() for time in time_intervals
+    ]
 
     df.loc[:, "order_value"] = (
         (df["item_fractional_price"] * df["item_quantity"])
@@ -416,15 +442,21 @@ def calculate_revenue_by_day_period(df: pd.DataFrame, time_intervals: List[str])
     ]
 
     df.loc[:, "interval_label"] = pd.cut(
-        df[order_timestamp].dt.time, bins=time_intervals, labels=interval_labels
+        df[order_timestamp].dt.time,
+        bins=time_intervals,
+        labels=interval_labels,
     )
 
     return df.groupby("interval_label", observed=True)["order_value"].sum()
 
 
-def calculate_profit_by_day_period(df: pd.DataFrame, time_intervals: List[str]):
+def calculate_profit_by_day_period(
+    df: pd.DataFrame, time_intervals: List[str]
+):
     df[order_timestamp] = pd.to_datetime(df[order_timestamp])
-    time_intervals = [pd.to_datetime(str(time)).time() for time in time_intervals]
+    time_intervals = [
+        pd.to_datetime(str(time)).time() for time in time_intervals
+    ]
 
     df.loc[:, "order_value"] = (
         (df["item_fractional_price"] * df["item_quantity"])
@@ -432,7 +464,9 @@ def calculate_profit_by_day_period(df: pd.DataFrame, time_intervals: List[str]):
     ) / 100
     #! Note that currrently there are no modifier costs, but these can exist in
     # the future
-    df.loc[:, "profit"] = df["order_value"] - (df["item_fractional_cost"] / 100)
+    df.loc[:, "profit"] = df["order_value"] - (
+        df["item_fractional_cost"] / 100
+    )
 
     interval_labels = [
         f"{time_intervals[i]} to {time_intervals[i+1]}"
@@ -440,7 +474,9 @@ def calculate_profit_by_day_period(df: pd.DataFrame, time_intervals: List[str]):
     ]
 
     df.loc[:, "interval_label"] = pd.cut(
-        df[order_timestamp].dt.time, bins=time_intervals, labels=interval_labels
+        df[order_timestamp].dt.time,
+        bins=time_intervals,
+        labels=interval_labels,
     )
 
     return df.groupby("interval_label", observed=True)["profit"].sum()
@@ -502,19 +538,27 @@ def calculate_profits_over_periods(df, time_intervals=None, plot=False):
         period_start = start_date + timedelta(weeks=3 * period)
         period_end = min(period_start + timedelta(weeks=3), end_date)
         period_df = df[
-            (df[order_timestamp] >= period_start) & (df[order_timestamp] < period_end)
+            (df[order_timestamp] >= period_start)
+            & (df[order_timestamp] < period_end)
         ]
 
         # Check if the period has orders over 90% of the days
         unique_order_days = period_df[order_timestamp].dt.date.nunique()
-        if unique_order_days >= 5:  # At least 19 days with orders in a 21-day period
+        if (
+            unique_order_days >= 5
+        ):  # At least 19 days with orders in a 21-day period
 
             # Calculate profits for this period
-            period_profit = calculate_profit_by_day_period(period_df, time_intervals)
+            period_profit = calculate_profit_by_day_period(
+                period_df, time_intervals
+            )
             period_profit["Period"] = period + 1
             # Append the period's profits to the results DataFrame
             profit_results = pd.concat(
-                [profit_results, period_profit.to_frame(name=f"Period {period + 1}").T]
+                [
+                    profit_results,
+                    period_profit.to_frame(name=f"Period {period + 1}").T,
+                ]
             )
         else:
             # Handle periods with insufficient data (optional, based on your needs)
@@ -533,7 +577,9 @@ def generate_menu_matrix(df: pd.DataFrame, plot=False):
     # Calculate profit for each item
 
     #!NOTE: THIS IS SIMPLIFIED BECAUSE THERE ARE NO MODIFIERS
-    df["item_revenue"] = (df["item_quantity"] * df["item_fractional_price"]) / 100
+    df["item_revenue"] = (
+        df["item_quantity"] * df["item_fractional_price"]
+    ) / 100
     df["item_cost"] = (df["item_quantity"] * df["item_fractional_cost"]) / 100
 
     # Aggregate data to calculate popularity and profitability(profit-margin) for each item
@@ -544,7 +590,9 @@ def generate_menu_matrix(df: pd.DataFrame, plot=False):
 
     # Calculate thresholds for popularity and profitability
     popularity_threshold = item_popularity.quantile(0.5)  # Adjust as needed
-    profitability_threshold = item_profitability.quantile(0.5)  # Adjust as needed
+    profitability_threshold = item_profitability.quantile(
+        0.5
+    )  # Adjust as needed
 
     # Categorize items
     def categorize_item(row):
@@ -589,7 +637,10 @@ def plot_menu_matrix(df):
         color="category",
         hover_name="item_name",
         title="Menu Matrix",
-        labels={"item_profitability": "Profitability", "item_popularity": "Popularity"},
+        labels={
+            "item_profitability": "Profitability",
+            "item_popularity": "Popularity",
+        },
         color_discrete_map={
             "Star": "blue",
             "Puzzle": "green",

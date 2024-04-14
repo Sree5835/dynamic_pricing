@@ -1,15 +1,16 @@
-import pytest
 import pandas as pd
+import pytest
+
 from dynamic_pricing.analysis.utils import (
-    calculate_revenue,
-    calculate_average_orders_per_interval,
-    calculate_average_revenue_per_interval,
     calculate_average_orders_by_day_of_week,
+    calculate_average_orders_per_interval,
     calculate_average_revenue_by_day_of_week,
-    calculate_time_difference_in_order_acceptance_per_interval,
+    calculate_average_revenue_per_interval,
     calculate_prep_time_per_interval,
-    calculate_revenue_by_day_period,
     calculate_profit_by_day_period,
+    calculate_revenue,
+    calculate_revenue_by_day_period,
+    calculate_time_difference_in_order_acceptance_per_interval,
 )
 
 data = {
@@ -104,7 +105,9 @@ def test_calculate_average_revenue_by_day_of_week(example_df):
     assert median_revenue.to_list() == [3.0, 8.5]
 
 
-def test_calculate_time_difference_in_order_acceptance_per_interval(example_df):
+def test_calculate_time_difference_in_order_acceptance_per_interval(
+    example_df,
+):
     interval = 30
     mean_order_acceptance_time, median_order_acceptance_time = (
         calculate_time_difference_in_order_acceptance_per_interval(
@@ -125,10 +128,14 @@ def test_calculate_prep_time_per_interval(example_df):
 
 
 def test_calculate_revenue_by_day_period(example_df, example_time_intervals):
-    result_series = calculate_revenue_by_day_period(example_df, example_time_intervals)
+    result_series = calculate_revenue_by_day_period(
+        example_df, example_time_intervals
+    )
     assert result_series.to_list() == [12.0, 11.0]
 
 
 def test_calculate_profit_by_day_period(example_df, example_time_intervals):
-    result_series = calculate_profit_by_day_period(example_df, example_time_intervals)
+    result_series = calculate_profit_by_day_period(
+        example_df, example_time_intervals
+    )
     assert result_series.to_list() == [11.0, 9.9]

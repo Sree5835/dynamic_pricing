@@ -1,6 +1,5 @@
 import setuptools
 
-
 setuptools.setup(
     name="dynamic_pricing",
     version="0.0.1",

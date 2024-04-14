@@ -1,10 +1,11 @@
-from datetime import datetime
 import json
-from typing import List
-from sqlalchemy import create_engine, text
 import os
+from datetime import datetime
+from typing import List
+
 import pandas as pd
 import sqlalchemy as sqla
+from sqlalchemy import create_engine, text
 
 
 def get_db_connection():
@@ -72,7 +73,12 @@ def remove_constraints(
 ):
     try:
         conn.execute(
-            text((f"ALTER TABLE {table_name} " f"DROP CONSTRAINT temp_constraint;"))
+            text(
+                (
+                    f"ALTER TABLE {table_name} "
+                    f"DROP CONSTRAINT temp_constraint;"
+                )
+            )
         )
     except Exception as e:
         raise ConnectionError(
@@ -91,7 +97,9 @@ def upsert(
     tmp_table_name = create_tmp_table(conn, table_name, data_dict=data_dict)
     try:
         conflict_cols = [
-            f"{col}=EXCLUDED.{col}" for col in data_dict.keys() if col not in pk_cols
+            f"{col}=EXCLUDED.{col}"
+            for col in data_dict.keys()
+            if col not in pk_cols
         ]
 
         add_constraints(conn, table_name, pk_cols)
@@ -121,7 +129,9 @@ def upsert(
     return result
 
 
-def insert_customer(conn: sqla.engine.base.Connection, customer_data: dict) -> int:
+def insert_customer(
+    conn: sqla.engine.base.Connection, customer_data: dict
+) -> int:
     """Insert or update customer data."""
     filtered_customer_data = {
         "first_name": customer_data["first_name"],
@@ -129,7 +139,11 @@ def insert_customer(conn: sqla.engine.base.Connection, customer_data: dict) -> i
         "contact_access_code": customer_data["contact_access_code"],
     }
     return upsert(
-        conn, "customers", filtered_customer_data, ["contact_number"], "customer_id"
+        conn,
+        "customers",
+        filtered_customer_data,
+        ["contact_number"],
+        "customer_id",
     )
 
 
@@ -185,7 +199,9 @@ def insert_item(conn: sqla.engine.base.Connection, item_data: dict) -> int:
     )
 
 
-def insert_modifier(conn: sqla.engine.base.Connection, modifier_data: dict) -> int:
+def insert_modifier(
+    conn: sqla.engine.base.Connection, modifier_data: dict
+) -> int:
     """Insert or update modifier data."""
     filtered_modifier_data = {
         "deliveroo_modifier_id": modifier_data["id"],
@@ -203,7 +219,9 @@ def insert_modifier(conn: sqla.engine.base.Connection, modifier_data: dict) -> i
     )
 
 
-def insert_order_item(conn, order_id: int, item_id: int, item_data: dict) -> None:
+def insert_order_item(
+    conn, order_id: int, item_id: int, item_data: dict
+) -> None:
     """Insert order item data."""
     filtered_order_item_data = {
         "order_id": order_id,
@@ -241,7 +259,9 @@ def insert_order_item_modifier(
 def get_partner_id(conn, partner_name: str) -> int:
     """Get the partner ID from the database."""
 
-    query = text("SELECT partner_id FROM partners WHERE partner_name = :partner_name")
+    query = text(
+        "SELECT partner_id FROM partners WHERE partner_name = :partner_name"
+    )
     result = conn.execute(query, {"partner_name": partner_name}).scalar()
     return result or -1
 
@@ -260,7 +280,9 @@ def insert_order_data(
     else:
         partner_id = get_partner_id(conn, partner_name)
         if partner_id == -1:
-            raise ValueError(f"Partner {partner_name} does not exist in the database.")
+            raise ValueError(
+                f"Partner {partner_name} does not exist in the database."
+            )
         order_id = insert_order(conn, order_data, partner_id, -1)
 
     for item_data in order_data["items"]:
@@ -358,7 +380,9 @@ if __name__ == "__main__":
         # already processed: [298:1500]
         for order_data in orders_data[1500:]:
             try:
-                insert_order_data(conn, "nostimo", order_data, is_webhook=False)
+                insert_order_data(
+                    conn, "nostimo", order_data, is_webhook=False
+                )
                 conn.commit()
             except Exception as e:
                 print(f"Error inserting order data: {e}")

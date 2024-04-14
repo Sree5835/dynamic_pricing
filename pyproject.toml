@@ -1,0 +1,8 @@
+[tool.black]
+line-length = 79 # PEP8
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 79 # PEP8
