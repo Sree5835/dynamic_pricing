@@ -346,7 +346,7 @@ def load_order_data(
             WHERE
                 partners.partner_name = '{partner_name}';
             """
-    return pd.read_sql(query, conn.engine)
+    return pd.read_sql(query, conn)
 
 
 if __name__ == "__main__":

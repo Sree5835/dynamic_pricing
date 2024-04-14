@@ -3,8 +3,7 @@ import json
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import text
 
-from dynamic_pricing.db.db_init import create_tables
-from dynamic_pricing.db.db_utils import insert_order_data
+from dynamic_pricing.db.db_utils import insert_order_data, load_order_data
 
 
 def test_tables(connection: Connection):
@@ -33,3 +32,20 @@ def test_insert_order_data(connection: Connection):
         )
     ).fetchone()[0]
     assert ans == 1
+
+
+def test_load_data(connection: Connection):
+    df: pd.DataFrame = load_order_data(connection, "nostimo")
+    assert df.shape == (3, 27)
+    assert set(df["deliveroo_order_id"]) == {
+        "gb:6606c495-e33a-4bde-b152-e3ddd4efe0ee"
+    }
+    assert set(df["item_operational_name"]) == {
+        "Cheese Filled Bifteki Wrap (Handmade Greek Pitta Wraps)",
+        "Cheese Filled Bifteki (Handmade Single Grills)",
+    }
+    assert set(df["modifier_operational_name"]) == {
+        "Mustard",
+        "Mayonnaise",
+        None,
+    }

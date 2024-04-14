@@ -75,7 +75,7 @@ def create_tables(connection: sqla.engine.base.Connection) -> None:
         deliveroo_item_id VARCHAR(255) NOT NULL,
         item_name VARCHAR(255) NOT NULL,
         item_operational_name VARCHAR(255) NOT NULL,
-        fractional_cost INT
+        item_fractional_cost INT
         );"""
         )
     )
