@@ -204,7 +204,7 @@ def insert_modifier(
 ) -> int:
     """Insert or update modifier data."""
     filtered_modifier_data = {
-        "deliveroo_modifier_id": modifier_data["id"],
+        "deliveroo_modifier_id": modifier_data["pos_item_id"],
         "modifier_name": modifier_data["name"],
         "modifier_operational_name": modifier_data["operational_name"],
     }
@@ -238,13 +238,13 @@ def insert_order_item(
 
 
 def insert_order_item_modifier(
-    conn, order_id: int, item_id: int, modifier_data: dict
+    conn, order_id: int, item_id: int, modifier_id: int, modifier_data: dict
 ) -> None:
     """Insert order item modifier data."""
     filtered_order_item_modifier_data = {
         "order_id": order_id,
         "item_id": item_id,
-        "modifier_id": modifier_data["modifier_id"],
+        "modifier_id": modifier_id,
         "quantity": modifier_data["quantity"],
         "fractional_price": modifier_data["total_price"]["fractional"],
     }
@@ -290,8 +290,11 @@ def insert_order_data(
         insert_order_item(conn, order_id, item_id, item_data)
 
         for modifier_data in item_data["modifiers"]:
-            insert_modifier(conn, modifier_data)
-            insert_order_item_modifier(conn, order_id, item_id, modifier_data)
+
+            modifier_id = insert_modifier(conn, modifier_data)
+            insert_order_item_modifier(
+                conn, order_id, item_id, modifier_id, modifier_data
+            )
 
 
 def load_order_data(

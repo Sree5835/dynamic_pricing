@@ -4,12 +4,8 @@ import docker
 import pytest
 import sqlalchemy as sqla
 
+from dynamic_pricing.config import DB, PORT, POSTGRES_PASSWORD, USER
 from dynamic_pricing.db.db_init import create_tables
-
-POSTGRES_PASSWORD = "supersecretpassword"
-PORT = 65432
-USER = "postgres"
-DB = "postgres"
 
 
 @pytest.fixture(scope="session")
