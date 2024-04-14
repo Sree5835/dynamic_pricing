@@ -1,9 +1,13 @@
 import json
+import os
 
+from dotenv import load_dotenv
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import text
 
 from dynamic_pricing.db.db_utils import insert_order_data, load_order_data
+
+load_dotenv()
 
 
 def test_tables(connection: Connection):
@@ -21,6 +25,7 @@ def test_tables(connection: Connection):
 def test_insert_order_data(connection: Connection):
     with open("tests/test_data/test_order.json", "r") as file:
         order_data = json.load(file)
+    print(os.getenv("PARTNER1"))
     insert_order_data(
         connection, "nostimo", order_data=order_data, is_webhook=False
     )

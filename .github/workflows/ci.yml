@@ -29,6 +29,9 @@ jobs:
         run: |
           source venv/bin/activate
           pytest --junitxml=test_report.xml
+        env:
+          PARTNER1: ${{ vars.PARTNER1 }}
+          PARTNER2: ${{ vars.PARTNER2 }}
 
       - name: Run pre-commit
         run: |
