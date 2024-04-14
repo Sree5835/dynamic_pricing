@@ -14,8 +14,4 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: ["--markdown-linebreak-ext=md"]
-      - id: end-of-file-fixer
-        exclude_types:
-          - csv
-          - svg
       - id: check-added-large-files
