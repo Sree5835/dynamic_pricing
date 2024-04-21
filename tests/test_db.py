@@ -44,7 +44,7 @@ def test_insert_order_data(connection: Connection):
 def test_load_data(connection: Connection):
     df: pd.DataFrame = load_order_data(connection, os.getenv("PARTNER1"))
     assert df.shape == (3, 27)
-    assert set(df["deliveroo_order_id"]) == {
+    assert set(df["platform_order_id"]) == {
         "gb:6606c495-e33a-4bde-b152-e3ddd4efe0ee"
     }
     assert set(df["item_operational_name"]) == {
