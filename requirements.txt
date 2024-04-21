@@ -98,9 +98,6 @@ prometheus_client==0.20.0
 prompt-toolkit==3.0.43
 prophet==1.1.5
 psutil==5.9.8
-psycopg==3.1.18
-psycopg-binary==3.1.18
-psycopg2-binary==2.9.9
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pyarrow==15.0.0
@@ -132,7 +129,6 @@ stack-data==0.6.3
 stanio==0.3.0
 tenacity==8.2.3
 terminado==0.18.0
-testcontainers==4.3.3
 tinycss2==1.2.1
 tomli==2.0.1
 tornado==6.4

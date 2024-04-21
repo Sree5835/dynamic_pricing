@@ -61,9 +61,10 @@ def create_tables(connection: sqla.engine.base.Connection) -> None:
         text(
             """CREATE TABLE modifiers (
         modifier_id SERIAL PRIMARY KEY,
-        deliveroo_modifier_id VARCHAR(255) NOT NULL,
+        platform_modifier_id VARCHAR(255) NOT NULL,
         modifier_name VARCHAR(255) NOT NULL,
-        modifier_operational_name VARCHAR(255) NOT NULL
+        modifier_operational_name VARCHAR(255) NOT NULL,
+        modifier_fractional_cost INT
         );"""
         )
     )
@@ -72,7 +73,7 @@ def create_tables(connection: sqla.engine.base.Connection) -> None:
         text(
             """CREATE TABLE items (
         item_id SERIAL PRIMARY KEY,
-        deliveroo_item_id VARCHAR(255) NOT NULL,
+        platform_item_id VARCHAR(255) NOT NULL,
         item_name VARCHAR(255) NOT NULL,
         item_operational_name VARCHAR(255) NOT NULL,
         item_fractional_cost INT
@@ -84,8 +85,8 @@ def create_tables(connection: sqla.engine.base.Connection) -> None:
         text(
             """CREATE TABLE orders (
         order_id SERIAL PRIMARY KEY,
-        deliveroo_order_id VARCHAR(255) UNIQUE NOT NULL,
-        deliveroo_order_number BIGINT NOT NULL,
+        platform_order_id VARCHAR(255) UNIQUE NOT NULL,
+        platform_order_number BIGINT NOT NULL,
         order_status VARCHAR(255) NOT NULL,
         order_placed_timestamp TIMESTAMP NOT NULL,
         order_updated_timestamp TIMESTAMP,

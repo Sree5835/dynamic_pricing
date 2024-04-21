@@ -158,8 +158,8 @@ def insert_order(
 ) -> int:
     """Insert or update order data."""
     filtered_order_data = {
-        "deliveroo_order_id": order_data["id"],
-        "deliveroo_order_number": order_data["order_number"],
+        "platform_order_id": order_data["id"],
+        "platform_order_number": order_data["order_number"],
         "order_status": order_data["status"],
         "order_placed_timestamp": datetime.strptime(
             order_data["status_log"][0]["at"], "%Y-%m-%dT%H:%M:%SZ"
@@ -180,14 +180,14 @@ def insert_order(
         "partner_id": partner_id,
     }
     return upsert(
-        conn, "orders", filtered_order_data, ["deliveroo_order_id"], "order_id"
+        conn, "orders", filtered_order_data, ["platform_order_id"], "order_id"
     )
 
 
 def insert_item(conn: sqla.engine.base.Connection, item_data: dict) -> int:
     """Insert or update item data."""
     filtered_item_data = {
-        "deliveroo_item_id": item_data["pos_item_id"],
+        "platform_item_id": item_data["pos_item_id"],
         "item_name": item_data["name"],
         "item_operational_name": item_data["operational_name"],
     }
@@ -197,7 +197,7 @@ def insert_item(conn: sqla.engine.base.Connection, item_data: dict) -> int:
         filtered_item_data,
         [
             "item_name"
-        ],  #!TODO: will need to change this to actual pk or deliveroo_item_id
+        ],  #!TODO: will need to change this to actual pk or platform_item_id
         "item_id",
     )
 
@@ -207,7 +207,7 @@ def insert_modifier(
 ) -> int:
     """Insert or update modifier data."""
     filtered_modifier_data = {
-        "deliveroo_modifier_id": modifier_data["pos_item_id"],
+        "platform_modifier_id": modifier_data["pos_item_id"],
         "modifier_name": modifier_data["name"],
         "modifier_operational_name": modifier_data["operational_name"],
     }
@@ -217,7 +217,7 @@ def insert_modifier(
         filtered_modifier_data,
         [
             "modifier_name"
-        ],  #!TODO: will need to change this to actual pk or deliveroo_modifier_id
+        ],  #!TODO: will need to change this to actual pk or platform_modifier_id
         "modifier_id",
     )
 
@@ -306,8 +306,8 @@ def load_order_data(
     query = f"""
             SELECT
                 orders.order_id,
-                orders.deliveroo_order_id,
-                orders.deliveroo_order_number,
+                orders.platform_order_id,
+                orders.platform_order_number,
                 orders.order_status,
                 orders.order_placed_timestamp,
                 orders.order_updated_timestamp,
@@ -320,14 +320,14 @@ def load_order_data(
                 partners.partner_id,
                 partners.partner_name,
                 items.item_id,
-                items.deliveroo_item_id,
+                items.platform_item_id,
                 items.item_name,
                 items.item_operational_name,
                 items.item_fractional_cost,
                 order_items.quantity AS item_quantity,
                 order_items.fractional_price AS item_fractional_price,
                 modifiers.modifier_id,
-                modifiers.deliveroo_modifier_id,
+                modifiers.platform_modifier_id,
                 modifiers.modifier_name,
                 modifiers.modifier_operational_name,
                 order_item_modifiers.quantity AS modifier_quantity,
