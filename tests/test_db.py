@@ -24,7 +24,8 @@ def test_tables(connection: Connection):
         text(
             """SELECT COUNT(*)
         FROM pg_catalog.pg_tables
-        WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'; # noqa: E501
+        WHERE schemaname != 'pg_catalog'
+        AND schemaname != 'information_schema';
         """
         )
     ).fetchone()[0]
