@@ -1,3 +1,9 @@
+"""
+This module contains tests for various analysis utilities used in the dynamic
+pricing application. It verifies the correctness of functions calculating
+different metrics like revenue, profit, and preparation times.
+"""
+
 import pandas as pd
 import pytest
 
@@ -57,85 +63,113 @@ data = {
 
 
 @pytest.fixture
-def example_df():
+def sample_df():
+    """Fixture to provide a DataFrame setup for testing."""
     return pd.DataFrame(data)
 
 
 @pytest.fixture
-def example_time_intervals():
+def sample_time_intervals():
+    """Fixture to provide a list of time intervals for testing revenue
+    calculations."""
     return ["00:00", "14:00", "18:45", "23:59:59"]
 
 
-def test_calculate_revenue(example_df):
-    result_df = calculate_revenue(example_df)
+def test_calculate_revenue(sample_df):  # pylint: disable=W0621
+    """Test to verify the revenue calculation from the given DataFrame."""
+    result_df = calculate_revenue(sample_df)
     assert result_df["revenue"].to_list() == [2.0, 2.0, 4.0, 9.0, 9.0, 6.0]
 
 
-def test_calculate_average_orders_per_interval(example_df):
-    interval = 30  # Example interval of 60 minutes
+def test_calculate_average_orders_per_interval(
+    sample_df,
+):  # pylint: disable=W0621
+    """Test to verify the average and median orders per time interval."""
+    interval = 30  # Example interval of 30 minutes
     mean_orders, median_orders = calculate_average_orders_per_interval(
-        example_df, interval, plot=False
+        sample_df, interval, plot=False
     )
     assert mean_orders.to_list() == [1.0, 1.0, 1.0, 1.0, 2.0]
     assert median_orders.to_list() == [1.0, 1.0, 1.0, 1.0, 2.0]
 
 
-def test_calculate_average_revenue_per_interval(example_df):
+def test_calculate_average_revenue_per_interval(
+    sample_df,
+):  # pylint: disable=W0621
+    """Test to verify the average and median revenue per time interval."""
     interval = 30
     mean_revenue, median_revenue = calculate_average_revenue_per_interval(
-        example_df, interval, plot=False
+        sample_df, interval, plot=False
     )
     assert mean_revenue.to_list() == [6.0, 4.0, 2.0, 2.0, 9.0]
     assert median_revenue.to_list() == [6.0, 4.0, 2.0, 2.0, 9.0]
 
 
-def test_calculate_average_orders_by_day_of_week(example_df):
+def test_calculate_average_orders_by_day_of_week(
+    sample_df,
+):  # pylint: disable=W0621
+    """Test to verify the average and median orders by day of the week."""
     mean_orders, median_orders = calculate_average_orders_by_day_of_week(
-        example_df, plot=False
+        sample_df, plot=False
     )
     assert mean_orders.to_list() == [1.0, 1.5]
     assert median_orders.to_list() == [1.0, 1.5]
 
 
-def test_calculate_average_revenue_by_day_of_week(example_df):
+def test_calculate_average_revenue_by_day_of_week(
+    sample_df,
+):  # pylint: disable=W0621
+    """Test to verify the average and median revenue by day of the week."""
     mean_revenue, median_revenue = calculate_average_revenue_by_day_of_week(
-        example_df, plot=False
+        sample_df, plot=False
     )
     assert mean_revenue.to_list() == [3.0, 8.5]
     assert median_revenue.to_list() == [3.0, 8.5]
 
 
-def test_calculate_time_difference_in_order_acceptance_per_interval(
-    example_df,
+def test_calculate_time_difference_in_order_acceptance_per_interval(  # pylint: disable=W0621
+    sample_df,
 ):
+    """Test to verify the mean and median time differences in order acceptance
+    per interval."""
     interval = 30
     mean_order_acceptance_time, median_order_acceptance_time = (
         calculate_time_difference_in_order_acceptance_per_interval(
-            example_df, interval, plot=False
+            sample_df, interval, plot=False
         )
     )
     assert mean_order_acceptance_time.to_list() == [5.0, 5.0, 5.0, 5.0, 5.0]
     assert median_order_acceptance_time.to_list() == [5.0, 5.0, 5.0, 5.0, 5.0]
 
 
-def test_calculate_prep_time_per_interval(example_df):
+def test_calculate_prep_time_per_interval(sample_df):  # pylint: disable=W0621
+    """Test to verify the mean and median preparation times
+    per time interval."""
     interval = 30
     mean_prep_time, median_prep_time = calculate_prep_time_per_interval(
-        example_df, interval, plot=False
+        sample_df, interval, plot=False
     )
     assert mean_prep_time.to_list() == [15.0, 15.0, 15.0, 15.0, 15.0]
     assert median_prep_time.to_list() == [15.0, 15.0, 15.0, 15.0, 15.0]
 
 
-def test_calculate_revenue_by_day_period(example_df, example_time_intervals):
+def test_calculate_revenue_by_day_period(
+    sample_df, sample_time_intervals
+):  # pylint: disable=W0621
+    """Test to verify the revenue calculation by different time periods of the
+    day."""
     result_series = calculate_revenue_by_day_period(
-        example_df, example_time_intervals
+        sample_df, sample_time_intervals
     )
     assert result_series.to_list() == [12.0, 11.0]
 
 
-def test_calculate_profit_by_day_period(example_df, example_time_intervals):
+def test_calculate_profit_by_day_period(
+    sample_df, sample_time_intervals
+):  # pylint: disable=W0621
+    """Test to verify the profit calculation by different time periods of the
+    day."""
     result_series = calculate_profit_by_day_period(
-        example_df, example_time_intervals
+        sample_df, sample_time_intervals
     )
     assert result_series.to_list() == [11.0, 9.9]
