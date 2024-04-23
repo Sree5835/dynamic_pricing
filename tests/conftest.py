@@ -4,7 +4,7 @@ import docker
 import pytest
 import sqlalchemy as sqla
 
-from dynamic_pricing.config import DB, PORT, POSTGRES_PASSWORD, USER
+from test_config import DB, PORT, POSTGRES_PASSWORD, USER
 from dynamic_pricing.db.db_init import create_tables
 
 
