@@ -7,7 +7,7 @@ retrieval of loaded data to ensure proper functionality and integration.
 import json
 import os
 
-import pandas as pd  # Importing pandas for DataFrame operations
+import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import text
@@ -37,7 +37,7 @@ def test_insert_order_data(connection: Connection):
     ensure data integrity and functionality."""
     with open(
         "tests/test_data/test_order.json", "r", encoding="utf-8"
-    ) as file:  # Specified encoding
+    ) as file:
         order_data = json.load(file)
     insert_order_data(
         connection,

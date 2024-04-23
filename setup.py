@@ -1,3 +1,5 @@
+# This module converts my dynamic_pricing directory into a package
+
 import setuptools
 
 setuptools.setup(
