@@ -7,7 +7,7 @@ different metrics like revenue, profit, and preparation times.
 import pandas as pd
 import pytest
 
-from dynamic_pricing.analysis.utils import (
+from dynamic_pricing.analysis.metrics import (
     calculate_average_orders_by_day_of_week,
     calculate_average_orders_per_interval,
     calculate_average_revenue_by_day_of_week,
