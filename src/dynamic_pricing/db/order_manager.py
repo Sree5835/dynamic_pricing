@@ -151,7 +151,8 @@ def insert_order_data(
 ) -> None:
     """Insert webhook order into the database."""
 
-    # this statement is leveraging the understanding that the webhook order data tends to have a customer id, but the stored data doesn't
+    # this statement is leveraging the understanding that the webhook order
+    #   data tends to have a customer id, but the stored data doesn't
     if is_webhook:
         customer_id = insert_customer(conn, order_data["customer"])
         order_id = insert_order(
