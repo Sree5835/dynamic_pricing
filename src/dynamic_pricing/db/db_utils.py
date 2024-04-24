@@ -4,7 +4,6 @@ It includes functions to establish database connections, create temporary tables
 perform upsert operations, and load data, among other utility functions.
 """
 
-import json
 import os
 from typing import List
 
