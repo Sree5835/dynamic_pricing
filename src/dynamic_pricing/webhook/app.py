@@ -1,122 +1,135 @@
+"""
+This module defines webhook endpoints for handling order updates and status synchronizations
+with a third-party API.
+"""
+
 import datetime
 import os
-
 import requests
 from flask import Flask, jsonify, request
 from requests.auth import HTTPBasicAuth
+from dynamic_pricing.db.order_manager import insert_order_data
+from dynamic_pricing.db.db_utils import get_db_connection
+from dynamic_pricing.webhook.config import (
+    BASE_URL_DEV,
+    BASE_URL_PROD,
+    AUTH_URL_DEV,
+    AUTH_URL_PROD,
+)
 
-# NOTE this code was built for tablet-based sites ONLY
+app = Flask(__name__)
+
+
+def get_api_url(order_id, prod):
+    """Get the API URL for the delivery service based on the environment."""
+    base_url = BASE_URL_PROD if prod else BASE_URL_DEV
+    return f"{base_url}/{order_id}"
+
+
+def get_auth_url(prod):
+    """Gets the authentication URL for the delivery service
+    based on the environment."""
+    return AUTH_URL_PROD if prod else AUTH_URL_DEV
 
 
 def get_bearer_token(prod=False):
-    if prod:
-        url = "https://auth.developers.deliveroo.com/oauth2/token"
-    else:
-        url = "https://auth-sandbox.developers.deliveroo.com/oauth2/token"
+    """Retrieve the bearer token for authentication from the delivery service API."""
+    url = get_auth_url(prod)
     payload = {"grant_type": "client_credentials"}
-
     headers = {
         "accept": "application/json",
         "content-type": "application/x-www-form-urlencoded",
     }
+    client_id = os.getenv("PROD_CLIENT_ID" if prod else "DEV_CLIENT_ID")
+    secret = os.getenv("PROD_SECRET" if prod else "DEV_SECRET")
 
-    if prod:
-        client_id = os.getenv("PROD_CLIENT_ID")
-        secret = os.getenv("PROD_SECRET")
-    else:
-        client_id = os.getenv("DEV_CLIENT_ID")
-        secret = os.getenv("DEV_SECRET")
-    response_access = requests.post(
+    response = requests.post(
         url,
         auth=HTTPBasicAuth(client_id, secret),
         data=payload,
         headers=headers,
     )
+    response.raise_for_status()
+    return response.json()["access_token"]
 
-    return response_access.json()["access_token"]
 
-
-def sync_status(order_id: str, payload: dict, prod: bool = False):
-    if prod:
-        url = f"https://api.developers.deliveroo.com/order/v1/orders/{order_id}/sync_status"
-    else:
-        url = f"https://api-sandbox.developers.deliveroo.com/order/v1/orders/{order_id}/sync_status"
+def sync_status(order_id, payload, prod=False):
+    """Synchronize the status of an order with the delivery service API."""
+    url = get_api_url(order_id, prod) + "/sync_status"
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
         "Authorization": f"Bearer {get_bearer_token(prod)}",
     }
-
-    print("sent payload ", payload)
-    # NOTE make sure to check that the response sync is always given 200 response code
-    response_sync = requests.post(url, json=payload, headers=headers)
-    print(f"response_sync order {response_sync.text}")
-
-    return response_sync.json()
+    response = requests.post(url, json=payload, headers=headers)
+    response.raise_for_status()
+    return response.json()
 
 
-# NOTE need to implement better most scenarios on the restaurant side
-
-# only for tablet-less sites. There is a 'is_tabletless' field in the order object
-
-
-def update_order_status(order_id: str, status: str, prod: bool = False):
-    if prod:
-        url = (
-            f"https://api.developers.deliveroo.com/order/v1/orders/{order_id}"
-        )
-    else:
-        url = f"https://api-sandbox.developers.deliveroo.com/order/v1/orders/{order_id}"
-
-    status_payload = {
-        "status": status,
-    }
-
+def update_order_status(order_id, status, prod=False):
+    """Update the status of an order in the delivery service database."""
+    url = get_api_url(order_id, prod)
+    payload = {"status": status}
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
         "Authorization": f"Bearer {get_bearer_token(prod)}",
     }
+    response = requests.patch(url, json=payload, headers=headers)
+    response.raise_for_status()
+    return response.json()
 
-    response_order_update = requests.patch(
-        url, json=status_payload, headers=headers
+
+@app.route("/dev-webhook", methods=["POST"])
+def dev_webhook():
+    """Webhook endpoint for development environment."""
+    return handle_webhook(False)
+
+
+@app.route("/prod-webhook", methods=["POST"])
+def prod_webhook():
+    """Webhook endpoint for production environment."""
+    return handle_webhook(True)
+
+
+@app.route("/", methods=["GET"])
+def test():
+    """API test endpoint."""
+    return (
+        jsonify({"message": "The API is working just load a valid URL"}),
+        200,
     )
-    return response_order_update.json()
 
 
-def webhook(prod=False):
-    print("__________________________________________________________")
-
+def handle_webhook(prod):
+    """Handle incoming webhook requests to update order statuses or receive notifications."""
     data = request.get_json()
     if not prod:
-        print(data)
-    # current time like "2022-04-12T12:43:00.000Z"
-    date_time = (
-        datetime.datetime.now().isoformat(timespec="milliseconds")[:-3] + "Z"
-    )
-    payload = {"status": "succeeded", "occurred_at": date_time}
+        app.logger.info(
+            data
+        )  # Using logging instead of print for better practice
 
-    # order rejected by restaurant
+    occurred_at = (
+        datetime.datetime.now().isoformat(timespec="milliseconds") + "Z"
+    )
+    payload = {"status": "succeeded", "occurred_at": occurred_at}
+
     if data["body"]["order"]["status"] == "rejected":
         return jsonify({"message": "Order rejected successfully"}), 200
 
     for item in data["body"]["order"]["items"]:
-        if item["pos_item_id"] == "":
-            payload = {
-                "status": "failed",
-                "reason": "pos_item_id_not_found",
-                "notes": "id not found",
-                "occurred_at": date_time,
-            }
-            break
-
-    # NOTE: This is for items with incorrect pos_item_id (mismatched PLUS, according to Deliveroo)
-    # payload = {
-    #     "status": "failed",
-    #     "reason": "pos_item_id_mismatched",
-    #     "notes": "id not unique",
-    #     "occurred_at": date_time,
-    # }
+        if not item["pos_item_id"]:
+            return (
+                jsonify(
+                    {
+                        "status": "failed",
+                        "reason": "pos_item_id_not_found",
+                        "notes": "id not found",
+                        "occurred_at": occurred_at,
+                    }
+                ),
+                400,
+            )
 
     if data["event"] == "order.status_update":
         sync_status(data["body"]["order"]["id"], payload, prod)
@@ -124,31 +137,14 @@ def webhook(prod=False):
     if data["body"]["order"]["status"] == "canceled":
         return jsonify({"message": "Order canceled successfully"}), 200
 
-    return jsonify({"message": "Order received successfully"}), 200
-
-
-app = Flask(__name__)
-
-# make sure to encode the string to bytes
-webhook_secret = b"your_webhook_secret"
-
-
-@app.route("/dev-webhook", methods=["POST"])
-def dev_webhook():
-    return webhook(prod=False)
-
-
-@app.route("/prod-webhook", methods=["POST"])
-def prod_webhook():
-    return webhook(prod=True)
-
-
-@app.route("/", methods=["GET"])
-def test():
-    return (
-        jsonify({"message": "The API is working just load a valid URL"}),
-        200,
+    connection = get_db_connection()
+    insert_order_data(
+        connection,
+        data["body"]["order"]["restaurant"]["name"],
+        data["body"]["order"],
+        is_webhook=True,
     )
+    return jsonify({"message": "Order received successfully"}), 200
 
 
 if __name__ == "__main__":
