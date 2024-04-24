@@ -10,7 +10,7 @@ import pytest
 import sqlalchemy as sqla
 
 from test_config import DB, PORT, POSTGRES_PASSWORD, USER
-from dynamic_pricing.db.db_init import create_tables
+from dynamic_pricing.core.db_init import create_tables
 
 
 @pytest.fixture(scope="session")
@@ -41,7 +41,7 @@ def psql_docker():
 
 
 @pytest.fixture(scope="session")
-def connection(psql_docker):
+def connection(psql_docker):  # pylint: disable=W0613
     """
     Establishes a SQLAlchemy connection to the PostgreSQL database running in
     a Docker container. It ensures that the database tables are created before

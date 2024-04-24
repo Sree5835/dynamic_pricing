@@ -9,7 +9,7 @@ repos:
     hooks:
       - id: pylint
         args: ["--errors-only"]  # Optional: configure pylint to show only errors
-        args: [src, --disable=import-error]
+        args: [src, --disable=import-error, --disable=W0621]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

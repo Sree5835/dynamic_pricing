@@ -1,4 +1,3 @@
-import itertools
 from datetime import timedelta
 from typing import List
 
@@ -657,7 +656,7 @@ def plot_menu_matrix(df):
             y=row["item_popularity"],
             text=row["item_name"],
             showarrow=False,
-            font=dict(size=8),
+            # font=dict(size=8),
             xshift=5,
             yshift=10,
         )
