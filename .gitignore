@@ -9,3 +9,5 @@ tests/__pycache__
 src/dynamic_pricing/__pycache__
 src/dynamic_pricing/analysis/__pycache__
 src/dynamic_pricing/core/__pycache__
+src/dynamic_pricing/db/__pycache__
+
