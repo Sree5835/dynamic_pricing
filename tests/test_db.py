@@ -11,8 +11,8 @@ import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.sql import text
-from dynamic_pricing.db.order_manager import insert_order_data
-from dynamic_pricing.db.db_utils import load_order_data
+from dynamic_pricing.core.order_manager import insert_order_data
+from dynamic_pricing.core.db_utils import load_order_data
 
 load_dotenv()
 

@@ -7,7 +7,7 @@ import os
 import sqlalchemy as sqla
 from dotenv import load_dotenv
 from sqlalchemy import text
-from dynamic_pricing.db.db_utils import get_db_connection
+from dynamic_pricing.core.db_utils import get_db_connection
 
 load_dotenv()
 

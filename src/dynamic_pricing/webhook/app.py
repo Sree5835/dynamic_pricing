@@ -8,8 +8,8 @@ import os
 import requests
 from flask import Flask, jsonify, request
 from requests.auth import HTTPBasicAuth
-from dynamic_pricing.db.order_manager import insert_order_data
-from dynamic_pricing.db.db_utils import get_db_connection
+from dynamic_pricing.core.order_manager import insert_order_data
+from dynamic_pricing.core.db_utils import get_db_connection
 from dynamic_pricing.webhook.config import (
     BASE_URL_DEV,
     BASE_URL_PROD,

@@ -10,7 +10,7 @@ import pytest
 import sqlalchemy as sqla
 
 from test_config import DB, PORT, POSTGRES_PASSWORD, USER
-from dynamic_pricing.db.db_init import create_tables
+from dynamic_pricing.core.db_init import create_tables
 
 
 @pytest.fixture(scope="session")

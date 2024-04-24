@@ -7,7 +7,7 @@ It uses SQL upserts to ensure data integrity.
 from datetime import datetime
 import sqlalchemy as sqla
 from sqlalchemy.sql import text
-from dynamic_pricing.db.db_utils import upsert
+from dynamic_pricing.core.db_utils import upsert
 
 
 def parse_datetime(date_str):
