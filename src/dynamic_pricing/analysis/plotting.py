@@ -4,21 +4,31 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np
 
 
-def plot_mean_and_median_statistics_by_interval(  # pylint: disable=R0913
+def plot_statistics_with_interval(
     mean_statistic: pd.Series,
     median_statistic: pd.Series,
+    std_statistic: pd.Series,
     interval: int,
     x_label: str,
     y_label: str,
     title: str,
 ):
-    """Plot both mean and median statistics by interval."""
-    num_intervals = (24 * 60) // interval
-    x_labels = [f"{hour:02d}" for hour in range(24)]
+    """Plot mean, median, and standard deviation statistics by interval."""
+
+    min_index = mean_statistic.index.min()
+    max_index = (
+        mean_statistic.index.max()
+    )  # Assuming max index is the same for all statistics
+
+    # Create the range for the x-axis labels.
+    x_labels = [f"{x:02d}" for x in range(min_index, max_index + 1)]
+
     plt.figure(figsize=(12, 6))
     plt.plot(
+        mean_statistic.index,
         mean_statistic,
         marker="o",
         linestyle="-",
@@ -27,6 +37,7 @@ def plot_mean_and_median_statistics_by_interval(  # pylint: disable=R0913
         label="Mean",
     )
     plt.plot(
+        median_statistic.index,
         median_statistic,
         marker="x",
         linestyle="--",
@@ -34,12 +45,23 @@ def plot_mean_and_median_statistics_by_interval(  # pylint: disable=R0913
         markersize=6,
         label="Median",
     )
+    plt.errorbar(
+        std_statistic.index,
+        mean_statistic,
+        yerr=std_statistic,
+        fmt=" ",  # This makes the error bars have no line connecting them
+        ecolor="gray",
+        elinewidth=3,
+        capsize=5,
+        label="Std. Dev.",
+    )
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
-    plt.xticks(range(0, num_intervals, 60 // interval), x_labels)
+    plt.xticks(range(min_index, max_index + 1), x_labels)
     plt.grid(True)
     plt.legend()
+    plt.tight_layout()  # Adjust layout to make sure everything fits without overlap
     plt.show()
 
 
@@ -101,11 +123,11 @@ def plot_items_sold(df: pd.DataFrame):
 
 
 def plot_menu_matrix(df: pd.DataFrame):
-    """Plot a menu matrix based on item popularity and profitability."""
     fig = px.scatter(
         df,
         x="item_profitability",
         y="item_popularity",
+        text="item_name",
         color="category",
         hover_name="item_name",
         title="Menu Matrix",
@@ -120,16 +142,17 @@ def plot_menu_matrix(df: pd.DataFrame):
             "Dud": "red",
         },
         opacity=0.7,
+        log_y=True,
     )
-    for _, row in df.iterrows():
-        fig.add_annotation(
-            x=row["item_profitability"],
-            y=row["item_popularity"],
-            text=row["item_name"],
-            showarrow=False,
-            xshift=5,
-            yshift=10,
-        )
+
+    fig.update_traces(textposition="top center")
+
+    fig.update_layout(
+        yaxis=dict(title="Popularity (Log Scale)", type="log"),
+        xaxis=dict(title="Profitability"),
+        showlegend=True,
+    )
+
     fig.show()
 
 

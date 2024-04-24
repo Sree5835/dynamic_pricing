@@ -3,9 +3,10 @@
 from datetime import timedelta
 from typing import List
 
+from numpy import std
 import pandas as pd
 from dynamic_pricing.analysis.plotting import (
-    plot_mean_and_median_statistics_by_interval,
+    plot_statistics_with_interval,
     plot_mean_and_median_statistics_by_weekday,
     plot_menu_matrix,
     plot_items_sold,
@@ -66,10 +67,18 @@ def calculate_average_orders_per_interval(
         .groupby("interval_index")
         .median()
     )
+    std_orders = (
+        df.groupby(["interval_index", df[ORDER_TIMESTAMP].dt.date])
+        .size()
+        .groupby("interval_index")
+        .std()
+    )
+
     if plot:
-        plot_mean_and_median_statistics_by_interval(
+        plot_statistics_with_interval(
             mean_orders,
             median_orders,
+            std_orders,
             interval,
             "Hour of the Day",
             "Number of Orders",
@@ -104,10 +113,19 @@ def calculate_average_revenue_per_interval(
         .groupby("interval_index")
         .median()
     )
+    std_revenue = (
+        df.groupby(["interval_index", df[ORDER_TIMESTAMP].dt.date])[
+            "order_value"
+        ]
+        .sum()
+        .groupby("interval_index")
+        .std()
+    )
     if plot:
-        plot_mean_and_median_statistics_by_interval(
+        plot_statistics_with_interval(
             mean_revenue,
             median_revenue,
+            std_revenue,
             interval,
             "Hour of the Day",
             "Average Revenue",
@@ -147,10 +165,19 @@ def calculate_time_difference_in_order_acceptance_per_interval(
         .groupby("interval_index")
         .median()
     )
+    std_time_difference = (
+        df.groupby(["interval_index", df[ORDER_TIMESTAMP].dt.date])[
+            "time_difference"
+        ]
+        .median()
+        .groupby("interval_index")
+        .std()
+    )
     if plot:
-        plot_mean_and_median_statistics_by_interval(
+        plot_statistics_with_interval(
             mean_time_difference,
             median_time_difference,
+            std_time_difference,
             interval,
             "Hour of the Day",
             "Time Difference in Order Acceptance (minutes)",
@@ -191,10 +218,19 @@ def calculate_prep_time_per_interval(
         .groupby("interval_index")
         .median()
     )
+    std_time_difference = (
+        df.groupby(["interval_index", df[start_prep_time].dt.date])[
+            "time_difference"
+        ]
+        .median()
+        .groupby("interval_index")
+        .std()
+    )
     if plot:
-        plot_mean_and_median_statistics_by_interval(
+        plot_statistics_with_interval(
             mean_time_difference,
             median_time_difference,
+            std_time_difference,
             interval,
             "Hour of the Day",
             "Prep Time Difference (minutes)",
