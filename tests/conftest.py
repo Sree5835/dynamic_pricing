@@ -41,7 +41,7 @@ def psql_docker():
 
 
 @pytest.fixture(scope="session")
-def connection():
+def connection(psql_docker):
     """
     Establishes a SQLAlchemy connection to the PostgreSQL database running in
     a Docker container. It ensures that the database tables are created before
