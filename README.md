@@ -1,5 +1,3 @@
-# dynamic_pricing
-
 # Dynamic Pricing
 
 ## Introduction
