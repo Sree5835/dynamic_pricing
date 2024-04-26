@@ -88,7 +88,7 @@ pandocfilters==1.5.1
 parso==0.8.3
 pathspec==0.12.1
 pexpect==4.9.0
-pillow==10.2.0
+pillow==10.3.0
 platformdirs==4.2.0
 plotly==5.19.0
 pluggy==1.4.0
