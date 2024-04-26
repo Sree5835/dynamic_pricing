@@ -162,7 +162,7 @@ def test_calculate_revenue_by_day_period(
     result_series = calculate_revenue_by_day_period(
         sample_df, sample_time_intervals
     )
-    assert result_series.to_list() == [12.0, 11.0]
+    assert result_series.to_list() == [12.0, 11.0, 0.0]
 
 
 def test_calculate_profit_by_day_period(
@@ -173,7 +173,7 @@ def test_calculate_profit_by_day_period(
     result_series = calculate_profit_by_day_period(
         sample_df, sample_time_intervals
     )
-    assert result_series.to_list() == [11.0, 9.9]
+    assert result_series.to_list() == [11.0, 9.9, 0.0]
 
 
 def test_calculate_ordes_by_day_period(
