@@ -1,3 +1,13 @@
 .env
 venv
 sample.json
+build
+src/dynamic_pricing.egg-info
+src/data
+src/dynamic_pricing/data
+tests/__pycache__
+src/dynamic_pricing/__pycache__
+src/dynamic_pricing/analysis/__pycache__
+src/dynamic_pricing/core/__pycache__
+src/dynamic_pricing/db/__pycache__
+
