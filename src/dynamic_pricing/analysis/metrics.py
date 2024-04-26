@@ -3,7 +3,6 @@
 from datetime import timedelta
 from typing import List
 
-from numpy import std
 import pandas as pd
 from dynamic_pricing.analysis.plotting import (
     plot_statistics_with_interval,
@@ -79,7 +78,6 @@ def calculate_average_orders_per_interval(
             mean_orders,
             median_orders,
             std_orders,
-            interval,
             "Hour of the Day",
             "Number of Orders",
             f"Mean and Median Number of Orders per {interval}-min on an Average Day",
@@ -126,7 +124,6 @@ def calculate_average_revenue_per_interval(
             mean_revenue,
             median_revenue,
             std_revenue,
-            interval,
             "Hour of the Day",
             "Average Revenue",
             f"Mean and Median Revenue per {interval}-min on an Average Day",
@@ -178,7 +175,6 @@ def calculate_time_difference_in_order_acceptance_per_interval(
             mean_time_difference,
             median_time_difference,
             std_time_difference,
-            interval,
             "Hour of the Day",
             "Time Difference in Order Acceptance (minutes)",
             f"Mean and Median Time Difference in Order Acceptance per {interval}-min on an Average Day",  # pylint: disable=line-too-long
@@ -231,7 +227,6 @@ def calculate_prep_time_per_interval(
             mean_time_difference,
             median_time_difference,
             std_time_difference,
-            interval,
             "Hour of the Day",
             "Prep Time Difference (minutes)",
             f"Mean and Median Prep Time per {interval}-min on an Average Day",
@@ -350,6 +345,37 @@ def calculate_profit_by_day_period(
         labels=interval_labels,
     )
     return df.groupby("interval_label", observed=True)["profit"].sum()
+
+
+def calculate_orders_by_day_period(
+    df: pd.DataFrame, time_intervals: List[str]
+) -> pd.DataFrame:
+    """Count the number of orders by day period based on specified time intervals."""
+    # Convert order timestamp column to datetime
+    df[ORDER_TIMESTAMP] = pd.to_datetime(df[ORDER_TIMESTAMP])
+
+    # Create a list of datetime.time objects from the provided time intervals
+    time_intervals = [pd.to_datetime(time).time() for time in time_intervals]
+
+    # Assign labels for each interval
+    interval_labels = [
+        f"{time_intervals[i]} to {time_intervals[i+1]}"
+        for i in range(len(time_intervals) - 1)
+    ]
+
+    # Categorize each order into one of the intervals
+    df["interval_label"] = pd.cut(
+        df[ORDER_TIMESTAMP].dt.time,
+        bins=time_intervals,
+        labels=interval_labels,
+        right=False,  # Use the left inclusive and right exclusive in interval
+        include_lowest=True,  # Include the lowest value
+    )
+
+    # Count the number of orders in each interval
+    order_counts = df.groupby("interval_label").size()
+
+    return order_counts.reset_index(name="order_count")
 
 
 def calculate_profits_over_periods(

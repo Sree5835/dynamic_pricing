@@ -4,14 +4,12 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-import numpy as np
 
 
 def plot_statistics_with_interval(
     mean_statistic: pd.Series,
     median_statistic: pd.Series,
     std_statistic: pd.Series,
-    interval: int,
     x_label: str,
     y_label: str,
     title: str,
@@ -123,6 +121,7 @@ def plot_items_sold(df: pd.DataFrame):
 
 
 def plot_menu_matrix(df: pd.DataFrame):
+    """Plot the menu matrix with increased tick label sizes."""
     fig = px.scatter(
         df,
         x="item_profitability",
@@ -148,8 +147,15 @@ def plot_menu_matrix(df: pd.DataFrame):
     fig.update_traces(textposition="top center")
 
     fig.update_layout(
-        yaxis=dict(title="Popularity (Log Scale)", type="log"),
-        xaxis=dict(title="Profitability"),
+        yaxis={
+            "title": "Popularity (Log Scale)",
+            "type": "log",
+            "tickfont": {"size": 18},
+        },
+        xaxis={
+            "title": "Profitability",
+            "tickfont": {"size": 18},
+        },
         showlegend=True,
     )
 

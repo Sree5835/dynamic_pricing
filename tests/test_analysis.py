@@ -17,6 +17,7 @@ from dynamic_pricing.analysis.metrics import (
     calculate_revenue,
     calculate_revenue_by_day_period,
     calculate_time_difference_in_order_acceptance_per_interval,
+    calculate_orders_by_day_period,
 )
 
 data = {
@@ -173,3 +174,12 @@ def test_calculate_profit_by_day_period(
         sample_df, sample_time_intervals
     )
     assert result_series.to_list() == [11.0, 9.9]
+
+
+def test_calculate_ordes_by_day_period(
+    sample_df, sample_time_intervals
+):  # pylint: disable=W0621
+    """Test to verify the orders calculation by different time periods of the
+    day."""
+    result = calculate_orders_by_day_period(sample_df, sample_time_intervals)
+    assert result["order_count"].to_list() == [3, 3, 0]
