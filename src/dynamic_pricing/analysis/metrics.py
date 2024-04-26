@@ -317,7 +317,7 @@ def calculate_revenue_by_day_period(
         bins=time_intervals,
         labels=interval_labels,
     )
-    return df.groupby("interval_label", observed=True)["order_value"].sum()
+    return df.groupby("interval_label", observed=False)["order_value"].sum()
 
 
 def calculate_profit_by_day_period(
@@ -344,7 +344,7 @@ def calculate_profit_by_day_period(
         bins=time_intervals,
         labels=interval_labels,
     )
-    return df.groupby("interval_label", observed=True)["profit"].sum()
+    return df.groupby("interval_label", observed=False)["profit"].sum()
 
 
 def calculate_orders_by_day_period(
@@ -373,7 +373,7 @@ def calculate_orders_by_day_period(
     )
 
     # Count the number of orders in each interval
-    order_counts = df.groupby("interval_label").size()
+    order_counts = df.groupby("interval_label", observed=False).size()
 
     return order_counts.reset_index(name="order_count")
 
