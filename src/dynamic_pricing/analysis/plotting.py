@@ -174,8 +174,8 @@ def plot_profits_over_time(df: pd.DataFrame):
             )
         )
     fig.update_layout(
-        title="Profit Changes Over Time by Day Period",
-        xaxis_title="Period",
+        title="Chagnes in Profit Over Weekly Periods",
+        xaxis_title="Weeks",
         yaxis_title="Profit",
         legend_title="Day Period",
     )
