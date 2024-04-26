@@ -33,7 +33,7 @@ Flask-Cors==3.0.10
 fonttools==4.48.1
 fqdn==1.5.1
 greenlet==3.0.3
-gunicorn==20.1.0
+gunicorn==22.0.0
 h11==0.14.0
 holidays==0.43
 httpcore==1.0.4
