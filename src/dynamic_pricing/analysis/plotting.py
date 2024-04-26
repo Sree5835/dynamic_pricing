@@ -7,21 +7,18 @@ import pandas as pd
 
 
 def plot_statistics_with_interval(
-    mean_statistic: pd.Series,
-    median_statistic: pd.Series,
-    std_statistic: pd.Series,
+    statistics: (pd.Series, pd.Series, pd.Series),
     x_label: str,
     y_label: str,
     title: str,
 ):
     """Plot mean, median, and standard deviation statistics by interval."""
-
+    (mean_statistic, median_statistic, std_statistic) = statistics
     min_index = mean_statistic.index.min()
     max_index = (
         mean_statistic.index.max()
     )  # Assuming max index is the same for all statistics
 
-    # Create the range for the x-axis labels.
     x_labels = [f"{x:02d}" for x in range(min_index, max_index + 1)]
 
     plt.figure(figsize=(12, 6))

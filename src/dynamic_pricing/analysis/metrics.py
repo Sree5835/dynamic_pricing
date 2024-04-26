@@ -75,9 +75,7 @@ def calculate_average_orders_per_interval(
 
     if plot:
         plot_statistics_with_interval(
-            mean_orders,
-            median_orders,
-            std_orders,
+            (mean_orders, median_orders, std_orders),
             "Hour of the Day",
             "Number of Orders",
             f"Mean and Median Number of Orders per {interval}-min on an Average Day",
@@ -121,9 +119,7 @@ def calculate_average_revenue_per_interval(
     )
     if plot:
         plot_statistics_with_interval(
-            mean_revenue,
-            median_revenue,
-            std_revenue,
+            (mean_revenue, median_revenue, std_revenue),
             "Hour of the Day",
             "Average Revenue",
             f"Mean and Median Revenue per {interval}-min on an Average Day",
@@ -172,9 +168,11 @@ def calculate_time_difference_in_order_acceptance_per_interval(
     )
     if plot:
         plot_statistics_with_interval(
-            mean_time_difference,
-            median_time_difference,
-            std_time_difference,
+            (
+                mean_time_difference,
+                median_time_difference,
+                std_time_difference,
+            ),
             "Hour of the Day",
             "Time Difference in Order Acceptance (minutes)",
             f"Mean and Median Time Difference in Order Acceptance per {interval}-min on an Average Day",  # pylint: disable=line-too-long
@@ -224,9 +222,11 @@ def calculate_prep_time_per_interval(
     )
     if plot:
         plot_statistics_with_interval(
-            mean_time_difference,
-            median_time_difference,
-            std_time_difference,
+            (
+                mean_time_difference,
+                median_time_difference,
+                std_time_difference,
+            ),
             "Hour of the Day",
             "Prep Time Difference (minutes)",
             f"Mean and Median Prep Time per {interval}-min on an Average Day",
@@ -401,7 +401,7 @@ def calculate_profits_over_periods(
         unique_order_days = period_df[ORDER_TIMESTAMP].dt.date.nunique()
         if (
             unique_order_days >= 5
-        ):  # At least 19 days with orders in a 21-day period
+        ):  # At least 5 days with orders in a 21-day period
             period_profit = calculate_profit_by_day_period(
                 period_df, time_intervals
             )
@@ -433,7 +433,7 @@ def generate_menu_matrix(df: pd.DataFrame, plot=False):
     item_revenue = df.groupby("item_name")["item_revenue"].sum()
     item_cost = df.groupby("item_name")["item_cost"].sum()
     item_profitability = (item_revenue - item_cost) / item_revenue
-    popularity_threshold = item_popularity.quantile(0.5)  # Adjust as needed
+    popularity_threshold = item_popularity.quantile(0.5)
     profitability_threshold = item_profitability.quantile(
         0.5
     )  # Adjust as needed
